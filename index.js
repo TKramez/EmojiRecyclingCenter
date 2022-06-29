@@ -8,9 +8,12 @@ make acid effect by shrinking blocks instead of letting them rotate and drop
 do something to make sure that the emoji exist. either pull from a pre-made image (could use other icons)
   or compare to what is drawn for \uffff
 remove all the plain black emoji
-try a border around the canvas...not sure what color
 maybe make a funnel at the bottom to allow blocks to go in to be removed?
-create background and frame offscreen and copy in instead of drawing every frame
+is there a better way to know what blocks are on edge? maybe compute the edge at 
+  init and then when a block falls off mark its neighbors as on edge? this will
+  save figuring it out every update
+when checking for falling collisions, use gridLookup to check blocks in vertical
+  path instead of checking EVERY block
 
 */
 
@@ -18,6 +21,10 @@ class App {
   constructor() {
     this.canvas = document.getElementById('cmain');
     this.ctx = this.canvas.getContext('2d');
+    this.bgCanvas = document.createElement('canvas');
+    this.bgCtx = this.bgCanvas.getContext('2d');
+    this.bgCanvas.width = this.canvas.width;
+    this.bgCanvas.height = this.canvas.height;
     this.mousex = -Infinity;
     this.mousey = -Infinity;
     this.canvas.onmousemove = (e) => this.onmousemove(e);
@@ -76,7 +83,7 @@ class App {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     
     const size = this.blockSize;
-    const shake = 15;
+    const colorShake = 15;
     const wiggle = 0.5;        
     this.colors = [];
     for (let x = 0; x < this.canvas.width; x += size) {
@@ -97,9 +104,9 @@ class App {
         if (a == 255) {
           const wx =  wiggle * Math.sin(Math.random() * 10);
           const wy =  wiggle * Math.sin(Math.random() * 10);
-          const newr = r + shake * Math.sin(Math.random() * 10);
-          const newg = g + shake * Math.sin(Math.random() * 10);
-          const newb = b + shake * Math.sin(Math.random() * 10);
+          const newr = r + colorShake * Math.sin(Math.random() * 10);
+          const newg = g + colorShake * Math.sin(Math.random() * 10);
+          const newb = b + colorShake * Math.sin(Math.random() * 10);
           
           const hsl = this.rgbToHsl(newr, newg, newb);
           //this.colors.push(this.rgbToHsl(r, g, b));
@@ -138,6 +145,12 @@ class App {
       [this.colors[i], this.colors[n]] = [this.colors[n], this.colors[i]];
     }
 
+    this.createBackground();
+
+    ctx.font = '18px Arial';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
   }
   
   roundToGrid(f) {
@@ -147,14 +160,19 @@ class App {
   update() {
     let landedCount = 0;
     let moveCount = 0;
+    const halfBlock = this.blockSize / 2;
+    const activeCursorDist = (this.cursorSize + halfBlock) * (this.cursorSize + halfBlock);
     this.blocks.forEach( b => {
         
       if (!b.landed && !b.loose) {
-        const dx = this.mousex - (b.x + this.blockSize / 2);
-        const dy = this.mousey - (b.y + this.blockSize / 2);
+        //in the original image
+
+        //check if cursor is close enough
+        const dx = this.mousex - (b.x + halfBlock);
+        const dy = this.mousey - (b.y + halfBlock);
         const d2 = dx * dx + dy * dy;
 
-        if (d2 < (this.cursorSize * this.cursorSize + this.blockSize)) {        
+        if (d2 < activeCursorDist) {        
           let onEdge = false;
           for (let dx = -1; dx <= 1; dx++) {
             for (let dy = -1; dy <= 1; dy++) {
@@ -186,8 +204,11 @@ class App {
         }
       }
     
+      const maxY = this.canvas.height - this.blockSize;
+
       if (b.loose && !b.landed) {
-        b.vx += b.ax + Math.random() - 0.5;
+        //falling physics
+        b.vx += b.ax + 1 * (Math.random() - 0.5);
         b.vy += b.ay;
         b.x += b.vx;
         const newy = b.y + b.vy;
@@ -199,7 +220,7 @@ class App {
             if (!xoverlap) {return;}            
             const yoverlap = (bc.y > b.y + this.blockSize) && (bc.y <= newy + this.blockSize);      
 
-            if (xoverlap && yoverlap) {
+            if (yoverlap) {
               collision = true;
               b.landed = true;
               this.score += b.baseStr;
@@ -215,7 +236,8 @@ class App {
         });
           
         if (!collision) {
-          if ((newy + this.blockSize) >= this.canvas.height) {          
+          if ((newy + this.blockSize) >= maxY) {
+            //past the bottom of the screen
             b.y = this.canvas.height - this.blockSize;
             b.x = this.roundToGrid(b.x);            
             while (this.gridLookup[`${b.x},${b.y}`]) {
@@ -233,30 +255,21 @@ class App {
       
       if (b.landed) {
         landedCount++;
+
+        //don't do sand physics every time
         if (Math.random > 0.25) {return;}
-        //do the sand dance
-        
-        if (this.gridLookup[`${b.x},${b.y+this.blockSize}`] || b.y >= (this.canvas.height - this.blockSize)) {
+
+        //do the sand dance        
+        if (this.gridLookup[`${b.x},${b.y+this.blockSize}`] || b.y >= maxY) {
           //block below
           //try to fall left or right
-          if (Math.random() > 0.5) {
-            //try left
-            if (!this.gridLookup[`${b.x-this.blockSize},${b.y+this.blockSize}`] && b.y < (this.canvas.height - this.blockSize)) {
-              this.gridLookup[`${b.x},${b.y}`] = undefined;
-              b.y += this.blockSize;
-              b.x -= this.blockSize;
-              this.gridLookup[`${b.x},${b.y}`] = b;
-              moveCount++;
-            }
-          } else {
-            //try right
-               if (!this.gridLookup[`${b.x+this.blockSize},${b.y+this.blockSize}`] && b.y < (this.canvas.height - this.blockSize)) {
-              this.gridLookup[`${b.x},${b.y}`] = undefined;
-              b.y += this.blockSize;
-              b.x += this.blockSize;
-              this.gridLookup[`${b.x},${b.y}`] = b;
-              moveCount++;
-            }
+          const dir = Math.random() > 0.5 ? -1 : 1;
+          if (!this.gridLookup[`${b.x + dir * this.blockSize},${b.y+this.blockSize}`] && b.y < maxY) {
+            this.gridLookup[`${b.x},${b.y}`] = undefined;
+            b.y += this.blockSize;
+            b.x += dir * this.blockSize;
+            this.gridLookup[`${b.x},${b.y}`] = b;
+            moveCount++;
           }
         } else {
           //no block below so fall
@@ -267,16 +280,13 @@ class App {
         }
       }
       
-      if (b.y > (this.canvas.height - this.blockSize)) {
+      if (b.y > maxY) {
         b.landed = true;
         this.score += b.baseStr;
-        b.y = this.canvas.height - this.blockSize;
+        b.y = maxY;
         b.x = this.roundToGrid(b.x);      
       }
     });
-    
-    //remove dead blocks
-    //this.blocks = this.blocks.filter( b => b.alive );
     
     //sort so loose blocks are on top when drawing
     this.blocks = this.blocks.sort( (a, b) => {
@@ -293,17 +303,16 @@ class App {
     }
     
   }
-  
-  draw() {
-    const ctx = this.ctx;
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
+  createBackground() {
+    const ctx = this.bgCtx;
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, this.bgCanvas.width, this.bgCanvas.height);
     
-    //draw background
+    //background tiles
     const tileSize = 32;
-    for (let x = 0; x < this.canvas.width / tileSize; x++) {
-      for (let y = 0; y < this.canvas.height / tileSize; y++) {
+    for (let x = 0; x < this.bgCanvas.width / tileSize; x++) {
+      for (let y = 0; y < this.bgCanvas.height / tileSize; y++) {
         const ci = (x + y * 777) % this.colors.length;
         const c = this.colors[ci];
         ctx.fillStyle = `hsl(${c.h}, ${c.s * 100 * 0.3}%, ${c.l * 100}%)`;
@@ -315,52 +324,80 @@ class App {
     //draw canvas
     const sideBorder = 40;
     const topBorder = 20;
-    const height = this.canvas.height - (topBorder + 250);
-    const width = this.canvas.width - sideBorder * 2;
+    const height = this.bgCanvas.height - (topBorder + 250);
+    const width = this.bgCanvas.width - sideBorder * 2;
     const shadowOffset = 10;
     const frameSize = 10;
 
+    //frame shadow
     ctx.fillStyle = 'hsla(0, 0%, 0%, 0.4)';
     ctx.fillRect(sideBorder -frameSize + shadowOffset, topBorder -frameSize + shadowOffset, width + 2 * frameSize, height + 2 * frameSize);
 
+    //frame border
     ctx.fillStyle = 'gray';
     ctx.fillRect(sideBorder - frameSize, topBorder - frameSize, width + 2 * frameSize, height + 2 * frameSize);
 
+    //canvas
     ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, 150, 40);
     ctx.fillRect(sideBorder, topBorder, width, height);
-    
 
-    
-    ctx.font = '20px Arial';
+    //score canvas
+    const scoreWidth = 150;
+    const scoreHeight = 30;
+    ctx.fillStyle = 'hsla(0, 0%, 0%, 0.4)';
+    ctx.fillRect(shadowOffset * 0.5, shadowOffset * 0.5, scoreWidth + frameSize * 2, scoreHeight + frameSize * 2);
+    ctx.fillStyle = 'gray';
+    ctx.fillRect(0, 0, scoreWidth + frameSize * 2, scoreHeight + frameSize * 2);
+
+    ctx.fillStyle = 'white';
+    ctx.fillRect(frameSize, frameSize, scoreWidth, scoreHeight);
+
+    ctx.font = '18px Arial';
     ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
+    ctx.textBaseline = 'middle';
     ctx.fillStyle = 'black';
-    ctx.fillText(`Score: ${this.score.toFixed(0)}`, 10, 10);
+    ctx.fillText('Score:', 12, 25);
+
+  }
+  
+  draw() {
+    const ctx = this.ctx;
+    //ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    ctx.drawImage(this.bgCanvas, 0, 0);
+    
+    ctx.fillStyle = 'black';
+    ctx.fillText(this.score.toFixed(0), 68, 25);
+
+    const shadowOffset = 4;
+    const shadowColor = 'rgba(40,40,40,0.4)';
        
     this.blocks.forEach( b => {
-      if (b.strength < this.maxStr) {
+      //if (b.strength < this.maxStr) {
+      if (b.strength < b.baseStr) {
         if (b.landed) {
           //on pile
           ctx.fillStyle = b.c;
           ctx.fillRect(b.x + b.wx, b.y + b.wy, this.blockSize, this.blockSize);
         } else {
-          const fraction = (b.baseStr - b.strength) / b.baseStr;
-          const rotation = fraction * Math.PI / 2;
           const size = this.blockSize;
           if (b.loose) {
             //falling
-            const offset = 4;
-            ctx.fillStyle = 'rgba(40,40,40,0.4)';
-            ctx.fillRect(b.x + offset, b.y + offset, size, size);
+            ctx.fillStyle = shadowColor;
+            ctx.fillRect(b.x + shadowOffset, b.y + shadowOffset, size, size);
+            ctx.fillStyle = b.c;
+            ctx.fillRect(b.x, b.y, size, size);
+          } else {
+            const fraction = (b.baseStr - b.strength) / b.baseStr;
+            const rotation = fraction * Math.PI / 2;
+            //trying to fall
+            ctx.fillStyle = b.c;
+            ctx.save();
+            ctx.translate(b.x + size / 2, b.y + size / 2);        
+            ctx.rotate(rotation);
+            ctx.fillRect(-size / 2, -size / 2, size, size);
+            ctx.restore();
           }
-          //falling or trying to fall
-          ctx.fillStyle = b.c;
-          ctx.save();
-          ctx.translate(b.x + size / 2, b.y + size / 2);        
-          ctx.rotate(rotation);
-          ctx.fillRect(-size / 2, -size / 2, size, size);
-          ctx.restore();
         }
       } else {
         //untouched on canvas
@@ -369,10 +406,12 @@ class App {
       }
     });
     
+    //cursor
     ctx.fillStyle = 'rgba(38,38,38,0.2)';
     ctx.beginPath();
     ctx.arc(this.mousex, this.mousey, this.cursorSize, 0, Math.PI * 2);
     ctx.fill();
+    
     window.requestAnimationFrame( d => this.draw(d) );
   }
   
