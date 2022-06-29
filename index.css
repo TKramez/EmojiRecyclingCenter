@@ -1,0 +1,16 @@
+/*
+  .class
+  #id
+*/
+
+* {
+}
+
+body {
+  background: gray;
+}
+
+canvas {
+  background: white;
+  cursor: none;
+}
