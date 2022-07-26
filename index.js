@@ -11,10 +11,12 @@ is there a better way to know what blocks are on edge? maybe compute the edge at
   save figuring it out every update
 when checking for falling collisions, use gridLookup to check blocks in vertical
   path instead of checking EVERY block
-when no more blocks are hanging add next emoji
+when no more blocks are hanging add next emoji instead of waiting for everything to be gone
+  and clearing blocks
 use currency to buy other emoji and upgrades
 make path through a branching tree
 add touch controls
+integrate into scene control system from retro incremental
 
 */
 

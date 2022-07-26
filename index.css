@@ -7,7 +7,7 @@
 }
 
 body {
-  background: gray;
+  background: hsl(0, 0%, 20%);
 }
 
 canvas {
