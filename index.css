@@ -10,8 +10,12 @@ body {
   background: hsl(0, 0%, 20%);
 }
 
-canvas {
+#cmain {
   background: white;
   cursor: none;
   touch-action: none;
+}
+
+#cmap {
+  background: white;
 }
