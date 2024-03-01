@@ -39,6 +39,7 @@ class App {
     this.mousey = -Infinity;
     this.canvas.onmousemove = (e) => this.onmousemove(e);
     this.canvas.ontouchmove = (e) => this.ontouchmove(e);
+    this.mapCanvas.onclick = (e) => this.onMapClick(e);
     this.cursorSize = 25;
     this.score = 0;
     this.black = 0;
@@ -65,7 +66,7 @@ class App {
     
     setInterval(() => this.update(), 1000 / 60);
     window.requestAnimationFrame( d => this.draw(d) );
-    this.drawEmojiRank(this.mapCtx);
+    this.drawEmojiMap(this.mapCtx);
     
   }
   
@@ -137,7 +138,7 @@ class App {
     console.log('["' + fList.map(e => ctoe(e)).join`","` + '"];');
   }
   
-  init() {
+  init(emojiIndexForce) {
   
     this.blocks = [];
     this.blockLookup = {};
@@ -151,7 +152,8 @@ class App {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
-    const emojiIndex = Math.floor(Math.random() * this.emojiList.length);
+    const emojiIndex = emojiIndexForce ?? Math.floor(Math.random() * this.emojiList.length);
+    this.curIndex = emojiIndex;
     //const emojiIndex = 0;
     console.log(emojiIndex);
     const emoji = this.emojiList[emojiIndex];
@@ -639,7 +641,7 @@ class App {
     return value;
   }
 
-  drawEmojiRank(ctx) {
+  drawEmojiMap(ctx) {
     const canvas = ctx.canvas;
     const width = canvas.width;
     const height = canvas.height;
@@ -685,6 +687,7 @@ class App {
     ctx.textAlign = 'middle';
     ctx.fillStyle = 'black';
     const size = 32;
+    this.mapLocations = [];
     this.emojiList.forEach( (e, i) => {
       const value = this.emojiValues[i]; 
       const cx = 0;// (this.mousex - width / 2) * size;
@@ -697,6 +700,13 @@ class App {
       //const r = (value.r + value.g + value.b);// / (350000 * 3);
       const x = cx + (width / 2) + (size * 10) * Math.cos(hsl.h * Math.PI * 2 / 360) * r;
       const y = cy + (width / 2) + (size * 10) * Math.sin(hsl.h * Math.PI * 2 / 360) * r;
+      this.mapLocations.push({
+        x0: x - 9,
+        y0: y - 9,
+        x1: x + 9,
+        y1: y + 9,
+        i
+      });
       //const x = 50 + 400 * value.b / 350000;
       //const y = 50 + 400 * value.g / 350000;
       //const y = 50 + 400 * value.black / 1000;
@@ -813,6 +823,21 @@ class App {
     this.onmousemove(e);
     e.preventDefault();
     return false;
+  }
+
+  onMapClick(e) {
+    const canvasClientRect = this.mapCanvas.getBoundingClientRect();
+    const x = e.clientX - canvasClientRect.left;
+    const y = e.clientY - canvasClientRect.top;
+
+    for (let i = this.mapLocations.length - 1; i >= 0; i--) {
+      const box = this.mapLocations[i];
+      if (x >= box.x0 && x <= box.x1 && y >= box.y0 && y <= box.y1) {
+        this.init(i);
+        break;
+      }
+    }
+
   }
 }
 
