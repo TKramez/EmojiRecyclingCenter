@@ -13,4 +13,5 @@ body {
 canvas {
   background: white;
   cursor: none;
+  touch-action: none;
 }
