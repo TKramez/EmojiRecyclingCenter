@@ -3,22 +3,22 @@
 /*
 
 TODO:
+need better name
+  emoji destroyer?
+need favicon
 make acid effect by shrinking blocks instead of letting them rotate and drop
 do something to make sure that the emoji exist. either pull from a pre-made image (could use other icons)
   or compare to what is drawn for \uffff
 is there a better way to know what blocks are on edge? maybe compute the edge at 
   init and then when a block falls off mark its neighbors as on edge? this will
   save figuring it out every update
-when checking for falling collisions, use gridLookup to check blocks in vertical
-  path instead of checking EVERY block
-when no more blocks are hanging add next emoji instead of waiting for everything to be gone
-  and clearing blocks
 use currency to buy other emoji and upgrades
   use r to unlock g, g to unlock b, b to unlock r
   use black to unlock upgrades
 make path through a branching tree
 add touch controls
 integrate into scene control system from retro incremental
+have settings to turn off audio
 
 */
 
@@ -33,6 +33,7 @@ class App {
     this.mousex = -Infinity;
     this.mousey = -Infinity;
     this.canvas.onmousemove = (e) => this.onmousemove(e);
+    this.canvas.ontouchmove = (e) => this.ontouchmove(e);
     this.cursorSize = 25;
     this.score = 0;
     this.black = 0;
@@ -290,6 +291,8 @@ class App {
       this.audioContext.resume();
     }
 
+
+    let playTick = false;
     this.blocks.forEach( b => {
       
       if (b.wall) {return;}
@@ -332,9 +335,7 @@ class App {
               b.strength = 0;
               this.lastDropTime = (new Date()).getTime();
               
-              //TODO: only do this once per update
-              this.audioElement.play();
-              
+              playTick = true;
             }
           }
         }
@@ -428,6 +429,10 @@ class App {
         b.x = this.roundToGrid(b.x);      
       }
     });
+
+    if (playTick) {
+      this.audioElement.play();
+    }
 
     this.blocks = this.blocks.filter( b => {
       if (!b.alive) {
@@ -767,6 +772,15 @@ class App {
     this.canvasClientRect = this.canvas.getBoundingClientRect();    
     this.mousex = e.clientX - this.canvasClientRect.left;
     this.mousey = e.clientY - this.canvasClientRect.top;    
+  }
+
+
+  ontouchmove(e) {
+    e.clientX = e.targetTouches[0].clientX;
+    e.clientY = e.targetTouches[0].clientY - 75;
+    this.onmousemove(e);
+    e.preventDefault();
+    return false;
   }
 }
 
