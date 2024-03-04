@@ -5,14 +5,9 @@
 TODO:
 use currency to buy other emoji and upgrades
   use r to unlock g, g to unlock b, b to unlock r
-show the r => g, g => b, b => r relationship
-have settings to turn off audio
-indicate to player how to zoom back out (multi-touch) if they're on mobile
-add ability to reset
-add ability to import 
-add ability to export
-remove emoji from map when complete
 display remaining emoji count
+show total play time
+show a win screen
 show upgrades and allow purchase
   funnel opening size
   tool strength
@@ -62,12 +57,14 @@ class App {
     this.loading = true;
     this.draw();
     
+    this.tryAudio = false;
+    this.UI.btnHelp.click();
   }
 
   initUI() {
     this.UI = {};
 
-    const UIIDs = 'helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
+    const UIIDs = 'chkAudio,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
 
     UIIDs.forEach( id => {
       this.UI[id] = document.getElementById(id);
@@ -81,6 +78,7 @@ class App {
     this.UI.helpClose.onclick = () => {
       document.querySelector('body').classList.remove('blur2px');
       this.UI.helpContainer.close();
+      this.tryAudio = true;
     };
 
     this.UI.btnHelp.onclick = () => {
@@ -408,7 +406,7 @@ class App {
       if (b.landed) {return -1;}
     });
     //TODO: don't do this every update
-    if (this.audioContext.state === 'suspended') {
+    if (this.audioContext.state === 'suspended' && this.tryAudio) {
       this.audioContext.resume();
     }
 
@@ -549,7 +547,7 @@ class App {
       }
     });
 
-    if (playTick) {
+    if (playTick && this.UI.chkAudio.checked) {
       this.audioElement.play();
     }
 
@@ -1127,11 +1125,15 @@ class App {
   */
 
   async importEmojiData() {
+    const importStartTime = (new Date()).getTime();
     const response = await fetch('./pixelData.raw');
     const blob = await response.blob();
     this.blob = blob;
     this.fullPixelData = new Uint8Array(await blob.arrayBuffer());
-    console.log('IMPORT COMPLETE');
+    const importEndTime = (new Date()).getTime();
+    const importDeltaTime = (importEndTime - importStartTime) / 1000;
+    const rate = this.fullPixelData.length / importDeltaTime;
+    console.log(`PIXEL IMPORT COMPLETE (${importDeltaTime.toFixed(1)} seconds = ${rate.toFixed(1)} Bps)`);
 
     this.loading = false;
     this.genMapLocations();
