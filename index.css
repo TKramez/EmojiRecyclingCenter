@@ -4,10 +4,15 @@
 */
 
 * {
+  box-sizing: border-box;
 }
 
 body {
-  background: hsl(0, 0%, 20%);
+  background: hsl(117, 89%, 41%);
+}
+
+h1 {
+  margin: 0px;
 }
 
 #cmain {
@@ -18,4 +23,29 @@ body {
 
 #cmap {
   background: white;
+}
+
+#divTitle {
+  padding: 5px;
+  font-size: 40px;
+  font-weight: 600;
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  align-items: center;
+}
+
+#logo {
+  height: 64px;
+}
+
+.area {
+  background-color: white;
+  border: 4px solid black;
+  border-radius: 4px;
+  box-shadow: 4px 4px 3px hsla(0, 0%, 0%, 45%);
+  width: fit-content;
+}
+
+.blur2px {
+  filter: blur(2px);
 }

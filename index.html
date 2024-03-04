@@ -8,8 +8,59 @@
     <link rel="stylesheet" href="index.css">
   </head>
   <body>
-    <canvas id='cmain' width='500' height='700'></canvas>
-    <canvas id='cmap' width='700' height='700'></canvas>
+    <div id='divTitle' class='area'>
+      <img id='logo' src='favicon.png'><span>Emoji Recycling Center</span>
+    </div>
+    <canvas id='cmain' width='500' height='700' class='area'></canvas>
+    <canvas id='cmap' width='700' height='700' class='area'></canvas>
+    <div id='divUpgrades' class='area'>
+      <h2>Upgrades</h2>
+      <table>
+        <tr><th>Name</th><th>Value</th><th>Next Value</th><th>Buy</th></tr>
+        <tr><td>Tool Strength</td><td id='strVal'> </td><td id='strNext'> </td><td><button id='btnStr'>Buy</button></td></tr>
+        <tr><td>Tool Size</td><td id='sizeVal'></td><td id='sizeNext'></td><td><button id='btnSize'>Buy</button></td></tr>
+        <tr><td>Opening Size</td> <td id='openVal'></td><td id='openNext'></td><td><button id='btnOpen'>Buy</button></td></tr>
+      </table>
+      <button id='btnHelp'>Help</button><button id='btnImport'>Import</button><button id='btnExport'>Export</button><button id='btnSave'>Save</button><button id='btnReset'>Reset</button>  
+    </div>
+    <dialog id='helpContainer' class='area'>
+      <div>
+      <b>Welcome to the Emoji Recycling Center!</b><br>
+      Select an emoji in the map to begin the recycling process. You can select a different emoji at any time!<br>
+      Use your recycling tool (via your mouse or finger) to disassemble your selected emoji.<br>
+      If you get stuck on a mobile device, touching with two fingers will reset the zoom.<br>
+      As you collect pixels from the emoji, you will be able to increase your recycling efficiency.<br>
+      Black pixels allow you to purchase upgrades.<br>
+      Colored pixels increase your strength against other colors.<br>
+      Red improves green strength.<br>
+      Green improves blue strength.<br>
+      Blue improves red strength.<br>
+      Try and recycle all 758 emojis!
+      </div>
+      <div><button id='helpClose'>Close</button></div>
+    </dialog>
+    <dialog id='resetContainer' class='area'>
+      Are you sure you want to reset?
+      <div>
+        <button id='resetYes'>Yes</button><button id='resetNo'>No</button>
+      </div>
+    </dialog>
+    <dialog id='importContainer' class='area'>
+      <div>
+        <textarea id='importText' rows='8' cols='60' spellcheck='false'></textarea>
+      </div>
+      <div>
+        <button id='importBtnImport'>Import</button><button id='importBtnClose'>Close</button>
+      </div>
+    </dialog>
+    <dialog id='exportContainer' class='area'>
+      <div>
+        <textarea id='exportText' rows='8' cols='60' spellcheck='false'></textarea>
+      </div>
+      <div>
+        <button id='exportBtnClose'>Close</button>
+      </div>
+    </dialog>
     <script src="index.js"></script>
   </body>
 </html>
