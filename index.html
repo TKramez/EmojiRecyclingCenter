@@ -14,19 +14,23 @@
     <canvas id='cmain' width='500' height='700' class='area'></canvas>
     <canvas id='cmap' width='700' height='700' class='area'></canvas>
     <div id='divUpgrades' class='area'>
-      <h2>Upgrades</h2>
+      <h2>Upgrades & Info</h2>
       <table>
         <tr><th>Name</th><th>Value</th><th>Next Value</th><th>Buy</th></tr>
         <tr><td>Tool Strength</td><td id='strVal'> </td><td id='strNext'> </td><td><button id='btnStr'>Buy</button></td></tr>
         <tr><td>Tool Size</td><td id='sizeVal'></td><td id='sizeNext'></td><td><button id='btnSize'>Buy</button></td></tr>
         <tr><td>Opening Size</td> <td id='openVal'></td><td id='openNext'></td><td><button id='btnOpen'>Buy</button></td></tr>
       </table>
-      <button id='btnHelp'>Help</button>
-      <button id='btnImport'>Import</button>
-      <button id='btnExport'>Export</button>
-      <button id='btnSave'>Save</button>
-      <button id='btnReset'>Reset</button>
-      <input id='chkAudio' type='checkbox' checked>SFX
+      <div><b>Progress:</b> <span id='spanProgress'>?</span>/758 </div>
+      <div><b>Play time:</b> <span id='spanPlayTime'>?</span></div>
+      <div>
+        <button id='btnHelp'>Help</button>
+        <button id='btnImport'>Import</button>
+        <button id='btnExport'>Export</button>
+        <button id='btnSave'>Save</button>
+        <button id='btnReset'>Reset</button>
+        <input id='chkAudio' type='checkbox' checked>SFX
+      </div>
     </div>
     <dialog id='helpContainer' class='area'>
       <div>

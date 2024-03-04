@@ -5,8 +5,6 @@
 TODO:
 use currency to buy other emoji and upgrades
   use r to unlock g, g to unlock b, b to unlock r
-display remaining emoji count
-show total play time
 show a win screen
 show upgrades and allow purchase
   funnel opening size
@@ -50,7 +48,7 @@ class App {
     this.track.connect(this.audioContext.destination);
 
 
-
+    this.blocks = [];
     this.importEmojiData();
 
     this.startEmoji = 0;
@@ -64,7 +62,7 @@ class App {
   initUI() {
     this.UI = {};
 
-    const UIIDs = 'chkAudio,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
+    const UIIDs = 'spanProgress,spanPlayTime,chkAudio,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
 
     UIIDs.forEach( id => {
       this.UI[id] = document.getElementById(id);
@@ -405,7 +403,7 @@ class App {
       if (a.landed) {return 1;}
       if (b.landed) {return -1;}
     });
-    //TODO: don't do this every update
+
     if (this.audioContext.state === 'suspended' && this.tryAudio) {
       this.audioContext.resume();
     }
@@ -579,7 +577,7 @@ class App {
     if (nonWallCount === 0) {
       this.state.completeEmoji[this.curIndex] = 1; 
       this.drawEmojiMap(this.mapCtx);
-      this.init();
+      //this.init();
     }
     
   }
@@ -859,43 +857,27 @@ class App {
     //rgb in [0,350000]
     //black in [0, 1000]
 
-    const gridSize = 32;
-    ctx.font = '18px Arial';
-    ctx.textAlign = 'center';
-    ctx.textAlign = 'middle';
-    ctx.fillStyle = 'black';
     ctx.save();
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const dstData = imageData.data;
-    const size = 32;
+    const rscale = 320; //this is just a little bit smaller than width/2
     this.mapLocations = [];
     for (let i = 0; i < this.emojiCount; i++) {
       if (this.state.completeEmoji[i] === 1) {
         this.mapLocations.push({x0: Infinity, y0: Infinity, x1: Infinity, y1: Infinity});
-        return;
+        continue;
       };
-      //const value = this.emojiValues[i]; 
-      const cx = 0;// (this.mousex - width / 2) * size;
-      const cy = 0; //(this.mousey - width / 2) * size;
-      //const cx = 0;
-      //const cy = 0;
-      //const hsl = this.rgbToHsl(value.r * 255 / 350000, value.g * 255 / 350000, value.b * 255 / 350000);
-      //const hsl = this.rgbToHsl(value.r ,value.g, value.b);
-      //const r = hsl.s / 100; 
-      //const r = (value.r + value.g + value.b);// / (350000 * 3);
-      //const x = cx + (width / 2) + (size * 10) * Math.cos(hsl.h * Math.PI * 2 / 360) * r;
-      //const y = cy + (width / 2) + (size * 10) * Math.sin(hsl.h * Math.PI * 2 / 360) * r;
+      const cx = 0;
+      const cy = 0;
       const mina = 0;
       const maxa = 2 * Math.PI;
       let a = this.emojiPositions[i].a;
       if (a < mina || a > maxa) {
         this.mapLocations.push({x0: Infinity, y0: Infinity, x1: Infinity, y1: Infinity});
-        return;
+        continue;
       }
       a = this.lmap(a, mina, maxa, 0, 2 * Math.PI); 
 
-      const x = cx + (width / 2) + (size * 10) * Math.cos(a) * this.emojiPositions[i].r;
-      const y = cy + (height / 2) + (size * 10) * Math.sin(a) * this.emojiPositions[i].r;
+      const x = cx + (width / 2) + rscale * Math.cos(a) * this.emojiPositions[i].r;
+      const y = cy + (height / 2) + rscale * Math.sin(a) * this.emojiPositions[i].r;
       const emojiBounds = this.emojiBounds[i];
       this.mapLocations.push({
         x0: x + emojiBounds.minx,
@@ -912,30 +894,27 @@ class App {
     }
     ctx.restore();
 
-    /*
-    ctx.fillStyle = 'rgba(38,38,38,0.2)';
-    ctx.beginPath();
-    ctx.arc(this.mousex, this.mousey, this.cursorSize, 0, Math.PI * 2);
-    ctx.fill();
-    */
-
   }
   
   draw() {
     const ctx = this.ctx;
    
-    //this.drawEmojiRank(this.mapCtx);
-    //window.requestAnimationFrame( d => this.draw(d) );
-    //return;
-   
-    //ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
     if (this.loading) {
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
       ctx.fillStyle = 'black';
       ctx.font = '20px Arial';
       ctx.fillText('LOADING', 100, 100);
+      return;
+    }
+
+    if (this.blocks === undefined || this.blocks.length === 0) {
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      ctx.fillStyle = 'black';
+      ctx.font = '20px Arial';
+      ctx.fillText('No emoji left. Maybe you won?', 100, 100);
+      window.requestAnimationFrame( d => this.draw(d) );
       return;
     }
 
@@ -952,59 +931,103 @@ class App {
     const shadowOffset = 4;
     const shadowColor = 'rgba(40,40,40,0.4)';
 
-       
-    this.blocks.forEach( b => {
-      if (b.invisible) {return;}
-      //if (b.strength < this.maxStr) {
-      if (b.strength < b.baseStr) {
-        if (b.landed) {
-          //on pile
-          ctx.fillStyle = b.c;
-          ctx.fillRect(b.x + b.wx, b.y + b.wy, this.blockSize, this.blockSize);
-        } else {
-          const size = this.blockSize;
-          if (b.loose) {
-            //falling
-            ctx.fillStyle = shadowColor;
-            ctx.fillRect(b.x + shadowOffset, b.y + shadowOffset, size, size);
+    if (this.blocks !== undefined) {
+      this.blocks.forEach( b => {
+        if (b.invisible) {return;}
+        //if (b.strength < this.maxStr) {
+        if (b.strength < b.baseStr) {
+          if (b.landed) {
+            //on pile
             ctx.fillStyle = b.c;
-            ctx.fillRect(b.x, b.y, size, size);
+            ctx.fillRect(b.x + b.wx, b.y + b.wy, this.blockSize, this.blockSize);
           } else {
-            const fraction = (b.baseStr - b.strength) / b.baseStr;
-            const rotation = fraction * Math.PI / 2;
-            //trying to fall
-            if (this.highlightTime) {
-              ctx.fillStyle = `hsl(${b.hsl.h}, ${b.hsl.s}%, ${b.hsl.l * 0.9}%)`;
-            } else {
+            const size = this.blockSize;
+            if (b.loose) {
+              //falling
+              ctx.fillStyle = shadowColor;
+              ctx.fillRect(b.x + shadowOffset, b.y + shadowOffset, size, size);
               ctx.fillStyle = b.c;
+              ctx.fillRect(b.x, b.y, size, size);
+            } else {
+              const fraction = (b.baseStr - b.strength) / b.baseStr;
+              const rotation = fraction * Math.PI / 2;
+              //trying to fall
+              if (this.highlightTime) {
+                ctx.fillStyle = `hsl(${b.hsl.h}, ${b.hsl.s}%, ${b.hsl.l * 0.9}%)`;
+              } else {
+                ctx.fillStyle = b.c;
+              }
+              ctx.save();
+              ctx.translate(b.x + size / 2, b.y + size / 2);        
+              ctx.rotate(rotation);
+              ctx.fillRect(-size / 2, -size / 2, size, size);
+              ctx.restore();
             }
-            ctx.save();
-            ctx.translate(b.x + size / 2, b.y + size / 2);        
-            ctx.rotate(rotation);
-            ctx.fillRect(-size / 2, -size / 2, size, size);
-            ctx.restore();
           }
-        }
-      } else {
-        //untouched on canvas
-        if (this.highlightTime) {
-          ctx.fillStyle = `hsl(${b.hsl.h}, ${b.hsl.s}%, ${b.hsl.l * 0.9}%)`;
         } else {
-          ctx.fillStyle = b.c;
+          //untouched on canvas
+          if (this.highlightTime) {
+            ctx.fillStyle = `hsl(${b.hsl.h}, ${b.hsl.s}%, ${b.hsl.l * 0.9}%)`;
+          } else {
+            ctx.fillStyle = b.c;
+          }
+          ctx.fillRect(b.x, b.y, this.blockSize, this.blockSize);
         }
-        ctx.fillRect(b.x, b.y, this.blockSize, this.blockSize);
-      }
-    });
-    
+      });
+    }
+
     //cursor
     ctx.fillStyle = 'rgba(38,38,38,0.2)';
     ctx.beginPath();
     ctx.arc(this.mousex, this.mousey, this.cursorSize, 0, Math.PI * 2);
     ctx.fill();
+
+    const progress = this.state.completeEmoji.reduce( (acc, e) => acc + e );
+    this.UI.spanProgress.innerText = progress;
+
+    const playTime = (new Date()).getTime() - this.state.gameStart;
+    this.UI.spanPlayTime.innerText = this.remainingToStr(playTime, true);
+
     
     //setTimeout(() => window.requestAnimationFrame( d => this.draw(d) ), 1000/60);
     window.requestAnimationFrame( d => this.draw(d) );
   }
+
+  timeToObj(t) {
+    const result = {};
+
+    result.y = Math.floor(t / (365 * 24 * 60 * 60));
+    t = t % (365 * 24 * 60 * 60);
+    result.d = Math.floor(t / (24 * 60 * 60));
+    t = t % (24 * 60 * 60);
+    result.h = Math.floor(t / (60 * 60));
+    t = t % (60 * 60);
+    result.m = Math.floor(t / 60);
+    t = t % 60;
+    result.s = t;
+
+    return result;
+  }
+
+  remainingToStr(ms, full) {
+    if (ms === Infinity) {
+      return 'Infinity';
+    }
+
+    const timeObj = this.timeToObj(ms / 1000);
+
+    if (full) {
+      return `${timeObj.y}:${timeObj.d.toString().padStart(3,0)}:${timeObj.h.toString().padStart(2,0)}:${timeObj.m.toString().padStart(2,0)}:${timeObj.s.toFixed(1).padStart(4,0)}`;
+    }
+
+    if (timeObj.y > 0 || timeObj.d > 0 || timeObj.h > 0) {
+      return `${timeObj.y}:${timeObj.d.toString().padStart(3,0)}:${timeObj.h.toString().padStart(2,0)}:${timeObj.m.toString().padStart(2,0)}`;
+    } else {
+      return `${timeObj.m.toString().padStart(2,0)}:${timeObj.s.toFixed(1).padStart(4,0)}`;
+    }
+
+  }
+
   
   onmousemove(e) {    
     this.canvasClientRect = this.canvas.getBoundingClientRect();    
@@ -1139,8 +1162,13 @@ class App {
     this.genMapLocations();
     this.buildMapImgCanvas();
     this.drawEmojiMap(this.mapCtx);
-    //TODO: init with an emoji that is not in the complete list
-    this.init(0);
+
+    for (let i = 0; i < this.emojiCount; i++) {
+      if (this.state.completeEmoji[i] === 1) {continue;}
+      this.init(i);
+      break;
+    }
+    
     setInterval(() => this.update(), 1000 / 60);
     setInterval(() => this.saveToStorage(), 1000 * 5);
     this.draw();
