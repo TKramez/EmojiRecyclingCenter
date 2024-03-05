@@ -62,3 +62,8 @@ button {
 #divUpgrades {
   padding: 5px;
 }
+
+#divWinCanCont {
+  display: grid;
+  justify-items: center;
+}

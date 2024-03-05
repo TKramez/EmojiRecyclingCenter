@@ -4,12 +4,11 @@
 
 TODO:
 use currency to buy other emoji and upgrades
-  use r to unlock g, g to unlock b, b to unlock r
-show a win screen
 show upgrades and allow purchase
   funnel opening size
   tool strength
   cursor size
+save sfx enabled state
 
 */
 
@@ -62,7 +61,7 @@ class App {
   initUI() {
     this.UI = {};
 
-    const UIIDs = 'spanProgress,spanPlayTime,chkAudio,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
+    const UIIDs = 'cwin,spanWinTime,winBtnClose,winContainer,spanProgress,spanPlayTime,chkAudio,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
 
     UIIDs.forEach( id => {
       this.UI[id] = document.getElementById(id);
@@ -72,6 +71,11 @@ class App {
       app.reset();
     };
 
+
+    this.UI.winBtnClose.onclick = () => {
+      document.querySelector('body').classList.remove('blur2px');
+      this.UI.winContainer.close();
+    };
 
     this.UI.helpClose.onclick = () => {
       document.querySelector('body').classList.remove('blur2px');
@@ -576,7 +580,11 @@ class App {
     //restart when all blocks are dead
     if (nonWallCount === 0) {
       this.state.completeEmoji[this.curIndex] = 1; 
+      const remaining = this.state.completeEmoji.reduce( (acc, e) => acc + (e === 0 ? 1 : 0), 0);
       this.drawEmojiMap(this.mapCtx);
+      if (remaining === 0) {
+        this.showWin();
+      }
       //this.init();
     }
     
@@ -985,7 +993,9 @@ class App {
     const progress = this.state.completeEmoji.reduce( (acc, e) => acc + e );
     this.UI.spanProgress.innerText = progress;
 
-    const playTime = (new Date()).getTime() - this.state.gameStart;
+    const curTime = this.state.gameEnd ?? (new Date()).getTime();
+
+    const playTime = curTime - this.state.gameStart;
     this.UI.spanPlayTime.innerText = this.remainingToStr(playTime, true);
 
     
@@ -1180,6 +1190,21 @@ class App {
     const position = (value - inmin) / inSize;
     const outSize = outmax - outmin;
     return outmin + outSize * position;
+  }
+
+  showWin() {
+    document.querySelector('body').classList.add('blur2px');
+    if (this.state.gameEnd === undefined) {
+      this.state.gameEnd = (new Date()).getTime();
+    }
+    const totalPlayTime = this.state.gameEnd - this.state.gameStart;
+    this.UI.spanWinTime.innerText = this.remainingToStr(totalPlayTime, true);
+    const imgScale = 4;
+    this.UI.cwin.width = 62 * imgScale;
+    this.UI.cwin.height = 62 * imgScale;
+    const ctx = this.UI.cwin.getContext('2d');
+    ctx.drawImage(this.imgCanvas, 0, 0, 62, 62, 0, 0, this.UI.cwin.width, this.UI.cwin.height);
+    this.UI.winContainer.showModal();
   }
 }
 
