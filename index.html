@@ -11,33 +11,36 @@
     <div id='divTitle' class='area'>
       <img id='logo' src='favicon.png'><span>Emoji Recycling Center</span>
     </div>
-    <div id='divUpgrades' class='area'>
-      <h2>Upgrades & Info</h2>
-      <div>Black Pixel Count: <span id='blackCount'></span></div>
-      <table>
-        <tr><th>Name</th><th>Value</th><th>Next Value</th><th>Cost</th><th>Buy</th></tr>
-        <tr><td>Tool Strength</td><td id='strVal'> </td><td id='strNext'> </td><td id='strCost'></td><td><button id='btnStr'>Buy</button></td></tr>
-        <tr><td>Tool Size</td><td id='sizeVal'></td><td id='sizeNext'></td><td id='sizeCost'></td><td><button id='btnSize'>Buy</button></td></tr>
-        <tr><td>Opening Size</td> <td id='openVal'></td><td id='openNext'></td><td id='openCost'></td><td><button id='btnOpen'>Buy</button></td></tr>
-      </table>
-      <div><b>Progress:</b> <span id='spanProgress'>?</span>/758 </div>
-      <div><b>Play time:</b> <span id='spanPlayTime'>?</span></div>
-      <div>
-        <button id='btnHelp'>Help</button>
-        <button id='btnImport'>Import</button>
-        <button id='btnExport'>Export</button>
-        <button id='btnSave'>Save</button>
-        <button id='btnReset'>Reset</button>
-        <input id='chkAudio' type='checkbox' checked>SFX
-      </div>
+    <div id='gameContainer'>
+      <canvas id='cmain' width='500' height='700' class='area'></canvas>
+      <span id='divUpgrades' class='area'>
+        <h2>Upgrades & Info</h2>
+        <div>Black Pixel Count: <span id='blackCount'></span></div>
+        <table>
+          <tr><th>Name</th><th>Value</th><th>Next Value</th><th>Cost</th><th>Buy</th></tr>
+          <tr><td>Tool Strength</td><td id='strVal'> </td><td id='strNext'> </td><td id='strCost'></td><td><button id='btnStr'>Buy</button></td></tr>
+          <tr><td>Tool Size</td><td id='sizeVal'></td><td id='sizeNext'></td><td id='sizeCost'></td><td><button id='btnSize'>Buy</button></td></tr>
+          <tr><td>Opening Size</td> <td id='openVal'></td><td id='openNext'></td><td id='openCost'></td><td><button id='btnOpen'>Buy</button></td></tr>
+        </table>
+        <div><b>Progress:</b> <span id='spanProgress'>?</span>/758 </div>
+        <div><b>Play time:</b> <span id='spanPlayTime'>?</span></div>
+        <div>
+          <button id='btnHelp'>Help</button>
+          <button id='btnImport'>Import</button>
+          <button id='btnExport'>Export</button>
+          <button id='btnSave'>Save</button>
+          <button id='btnReset'>Reset</button>
+          <input id='chkAudio' type='checkbox' checked>SFX
+        </div>
+      </span>
+      <canvas id='cmap' width='700' height='700' class='area'></canvas>
     </div>
-    <canvas id='cmain' width='500' height='700' class='area'></canvas>
-    <canvas id='cmap' width='700' height='700' class='area'></canvas>
     <dialog id='helpContainer' class='area'>
       <div>
       <b>Welcome to the Emoji Recycling Center!</b><br>
-      Select an emoji in the map to begin the recycling process. You can select a different emoji at any time!<br>
-      Use your recycling tool (via your mouse or finger) to disassemble your selected emoji.<br>
+      Select an emoji in the map to begin the recycling process. <br>
+      You can select a different emoji at any time but your progress is NOT saved!<br>
+      Use your recycling tool (via your mouse or finger) to disassemble your selected emoji by hovering over pixels.<br>
       If you get stuck on a mobile device, touching with two fingers will reset the zoom.<br>
       As you collect pixels from the emoji, you will be able to increase your recycling efficiency.<br>
       Black pixels allow you to purchase upgrades.<br>

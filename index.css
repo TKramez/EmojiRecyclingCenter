@@ -9,6 +9,7 @@
 
 body {
   background: hsl(117, 89%, 41%);
+  min-width: 1010px;
 }
 
 h1 {
@@ -60,10 +61,18 @@ button {
 }
 
 #divUpgrades {
+  display: inline-block;
   padding: 5px;
 }
 
 #divWinCanCont {
   display: grid;
   justify-items: center;
+}
+
+#gameContainer {
+  display: grid;
+  grid-template-columns: 513px 1fr;
+  grid-row-gap: 5px;
+  align-items: start;
 }
