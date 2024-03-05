@@ -1,0 +1,16 @@
+{
+  "strict": "global",
+  "esversion": 11,
+  "globals": {
+    "window": true,
+    "document": true,
+    "console": true,
+    "localStorage": true,
+    "setInterval": true,
+    "setTimeout": true,
+    "Audio": true,
+    "LZString": true,
+    "fetch": true
+  }
+
+}
