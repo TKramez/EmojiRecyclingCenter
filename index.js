@@ -3,12 +3,9 @@
 /*
 
 TODO:
-use currency to buy other emoji and upgrades
-allow purchase of upgrades
-  funnel opening size
-  tool strength
-  cursor size
 apply upgrades
+  funnel opening size
+balance upgrades
 */
 
 class App {
@@ -23,6 +20,14 @@ class App {
     this.mapCtx = this.mapCanvas.getContext('2d');
     this.emojiCount = 758;
 
+    this.upgrades = {
+      str:   {base: 0.1, factor: 10, costBase: 100,   costFactor: 10},
+      tSize: {base: 4,   factor: 2,  costBase: 1000,  costFactor: 10},
+      oSize: {base: 2,   factor: 1,  costBase: 10000, costFactor: 20}
+    };
+
+
+
     this.loadFromStorage();
 
     this.initUI();
@@ -32,16 +37,13 @@ class App {
     this.canvas.onmousemove = (e) => this.onmousemove(e);
     this.canvas.ontouchmove = (e) => this.ontouchmove(e);
     this.mapCanvas.onclick = (e) => this.onMapClick(e);
-    this.cursorSize = 5;
     this.blockSize =  8;
-    this.toolStrength = 2;
     this.maxStr = 100;
     this.canvasClientRect = this.canvas.getBoundingClientRect();    
 
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     this.audioContext = new AudioContext();
     this.audioElement = new Audio('./click.wav');
-    //this.audioElement = new Audio('./blipSelect.wav');
     this.track = this.audioContext.createMediaElementSource(this.audioElement);
     this.track.connect(this.audioContext.destination);
 
@@ -60,11 +62,17 @@ class App {
   initUI() {
     this.UI = {};
 
-    const UIIDs = 'cwin,spanWinTime,winBtnClose,winContainer,spanProgress,spanPlayTime,chkAudio,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
+    const UIIDs = 'btnSize,btnStr,btnOpen,openVal,openNext,openCost,sizeVal,sizeNext,sizeCost,strCost,strNext,strVal,cwin,spanWinTime,winBtnClose,winContainer,spanProgress,spanPlayTime,chkAudio,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
 
     UIIDs.forEach( id => {
       this.UI[id] = document.getElementById(id);
     });
+
+    this.updateUpgradeUI();
+
+    this.UI.btnSize.onclick = () => this.buyUpgrade('tSize');
+    this.UI.btnStr.onclick = () => this.buyUpgrade('str');
+    this.UI.btnOpen.onclick = () => this.buyUpgrade('oSize');
 
     this.UI.resetYes.onclick = () => {
       app.reset();
@@ -194,7 +202,10 @@ class App {
       b: 0,
       black: 0,
       completeEmoji: (new Array(this.emojiCount)).fill(0),
-      sfx: true
+      sfx: true,
+      str: 0,
+      tSize: 0,
+      oSize: 0
     };
 
     if (rawState !== null) {
@@ -390,22 +401,61 @@ class App {
     return this.roundToMultiple(f, this.blockSize);
   }
 
+  getUpgradeStrength(name, next) {
+    return this.upgrades[name].base * Math.pow(this.upgrades[name].factor, this.state[name] + (next ? 1 : 0));
+  }
+
+  getUpgradeCost(name) {
+    return this.upgrades[name].costBase * Math.pow(this.upgrades[name].costFactor, this.state[name]);
+  }
+
+  buyUpgrade(name) {
+    const upgradeCost = this.getUpgradeCost(name);
+    if (this.state.black >= upgradeCost) {
+      this.state.black -= upgradeCost;
+      this.state[name] += 1;
+    }
+    this.updateUpgradeUI();
+  }
+
+  updateUpgradeUI() {
+    this.UI.strVal.innerText = this.getUpgradeStrength('str').toFixed(1); 
+    this.UI.strNext.innerText = this.getUpgradeStrength('str').toFixed(1);
+    this.UI.strCost.innerText = this.getUpgradeCost('str');
+
+    this.UI.sizeVal.innerText = this.getUpgradeStrength('tSize').toFixed(1); 
+    this.UI.sizeNext.innerText = this.getUpgradeStrength('tSize').toFixed(1);
+    this.UI.sizeCost.innerText = this.getUpgradeCost('tSize');
+
+    this.UI.openVal.innerText = this.getUpgradeStrength('oSize').toFixed(1); 
+    this.UI.openNext.innerText = this.getUpgradeStrength('oSize').toFixed(1);
+    this.UI.openCost.innerText = this.getUpgradeCost('oSize');
+
+    this.updateUpgradeEnables();
+  }
+  
+  updateUpgradeEnables() {
+    this.UI.btnOpen.disabled = this.state.black < this.getUpgradeCost('oSize');
+    this.UI.btnSize.disabled = this.state.black < this.getUpgradeCost('tSize');
+    this.UI.btnStr.disabled = this.state.black < this.getUpgradeCost('str');
+  }
+
   calcBlockStrength(block) {
-    //this.toolStrength;
     //gain 1 this.r/g/b for every 255 of r/g/b in block down the hole
     const rs = Math.pow(this.state.b + 1, 0.5) / (block.rgb.r + 1);
     const gs = Math.pow(this.state.r + 1, 0.5) / (block.rgb.g + 1);
     const bs = Math.pow(this.state.g + 1, 0.5) / (block.rgb.b + 1);
     const blacks = 0.1;
     const totals = block.black ? blacks : (rs + gs + bs) / 3;
-    return totals * this.toolStrength; //this.toolStrength; 
+    return totals * this.getUpgradeStrength('str');
   }
 
   update() {
     let landedCount = 0;
     let moveCount = 0;
     const halfBlock = this.blockSize / 2;
-    const activeCursorDist = (this.cursorSize + halfBlock) * (this.cursorSize + halfBlock);
+    const cursorSize = this.getUpgradeStrength('tSize');
+    const activeCursorDist = (cursorSize + halfBlock) * (cursorSize + halfBlock);
     let nonWallCount = 0;
 
     //sort so that lower landed blocks are first
@@ -995,7 +1045,8 @@ class App {
     //cursor
     ctx.fillStyle = 'rgba(38,38,38,0.2)';
     ctx.beginPath();
-    ctx.arc(this.mousex, this.mousey, this.cursorSize, 0, Math.PI * 2);
+    const cursorSize = this.getUpgradeStrength('tSize');
+    ctx.arc(this.mousex, this.mousey, cursorSize, 0, Math.PI * 2);
     ctx.fill();
 
     const progress = this.state.completeEmoji.reduce( (acc, e) => acc + e );
@@ -1006,7 +1057,8 @@ class App {
     const playTime = curTime - this.state.gameStart;
     this.UI.spanPlayTime.innerText = this.remainingToStr(playTime, true);
 
-    
+    this.updateUpgradeEnables();
+
     //setTimeout(() => window.requestAnimationFrame( d => this.draw(d) ), 1000/60);
     window.requestAnimationFrame( d => this.draw(d) );
   }
