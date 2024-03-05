@@ -3,7 +3,6 @@
 /*
 
 TODO:
-format numbers more nicely
 balance upgrades
 */
 
@@ -58,6 +57,31 @@ class App {
     this.UI.btnHelp.click();
   }
 
+  roundToVal(value, roundType, roundVal) {
+    return Math[roundType](value / roundVal) * roundVal;
+  }
+
+  roundExp(val, roundType) {
+    if (Math.abs(val) === Infinity) {return val.toString();}
+    const e = Math.floor(Math.log10(val));
+    const m = val / Math.pow(10.0, e);
+    const roundm = this.roundToVal(m, roundType, 0.1);
+    const result = `${roundm.toFixed(1)}e+${e}`;
+    return result;
+  }
+
+  formatCurrency(value, roundType) {
+    return this.formatValue(value, roundType, '\u25A0');
+  }
+
+  formatValue(value, roundType, prefix = '', suffix = '') {
+    if (value < 1000) {
+      return `${prefix}${this.roundToVal(value, roundType, 0.1).toFixed(1)}${suffix}`;
+    } else {
+      //return `${prefix}${value.toExponential(3)}${suffix}`;
+      return `${prefix}${this.roundExp(value, roundType)}${suffix}`;
+    }
+  }
   initUI() {
     this.UI = {};
 
@@ -441,17 +465,17 @@ class App {
   }
 
   updateUpgradeUI() {
-    this.UI.strVal.innerText = this.getUpgradeStrength('str').toFixed(1); 
-    this.UI.strNext.innerText = this.getUpgradeStrength('str', true).toFixed(1);
-    this.UI.strCost.innerText = this.getUpgradeCost('str');
+    this.UI.strVal.innerText = this.formatValue(this.getUpgradeStrength('str').toFixed(1), 'round');
+    this.UI.strNext.innerText = this.formatValue(this.getUpgradeStrength('str', true).toFixed(1), 'round');
+    this.UI.strCost.innerText = this.formatCurrency(this.getUpgradeCost('str'), 'ceil');
 
-    this.UI.sizeVal.innerText = this.getUpgradeStrength('tSize').toFixed(1); 
-    this.UI.sizeNext.innerText = this.getUpgradeStrength('tSize', true).toFixed(1);
-    this.UI.sizeCost.innerText = this.getUpgradeCost('tSize');
+    this.UI.sizeVal.innerText = this.formatValue(this.getUpgradeStrength('tSize').toFixed(1), 'round');
+    this.UI.sizeNext.innerText = this.formatValue(this.getUpgradeStrength('tSize', true).toFixed(1), 'round');
+    this.UI.sizeCost.innerText = this.formatCurrency(this.getUpgradeCost('tSize'), 'ceil');
 
-    this.UI.openVal.innerText = this.getUpgradeStrength('oSize').toFixed(1); 
-    this.UI.openNext.innerText = this.getUpgradeStrength('oSize', true).toFixed(1);
-    this.UI.openCost.innerText = this.getUpgradeCost('oSize');
+    this.UI.openVal.innerText = this.formatValue(this.getUpgradeStrength('oSize').toFixed(1), 'round');
+    this.UI.openNext.innerText = this.formatValue(this.getUpgradeStrength('oSize', true).toFixed(1), 'round');
+    this.UI.openCost.innerText = this.formatCurrency(this.getUpgradeCost('oSize'), 'ceil');
 
     this.updateUpgradeEnables();
   }
@@ -1012,10 +1036,10 @@ class App {
     ctx.fillStyle = 'black';
     const scoreX = 0;
     const scoreY = 618;
-    ctx.fillText(this.state.black.toFixed(1), scoreX + 30, scoreY + 20);
-    ctx.fillText(this.state.r.toFixed(1), scoreX + 30, scoreY + 35);
-    ctx.fillText(this.state.g.toFixed(1), scoreX + 30, scoreY + 50);
-    ctx.fillText(this.state.b.toFixed(1), scoreX + 30, scoreY + 65);
+    ctx.fillText(this.formatValue(this.state.black, 'floor'), scoreX + 30, scoreY + 20);
+    ctx.fillText(this.formatValue(this.state.r, 'floor'), scoreX + 30, scoreY + 35);
+    ctx.fillText(this.formatValue(this.state.g, 'floor'), scoreX + 30, scoreY + 50);
+    ctx.fillText(this.formatValue(this.state.b, 'floor'), scoreX + 30, scoreY + 65);
 
     const shadowOffset = 4;
     const shadowColor = 'rgba(40,40,40,0.4)';
