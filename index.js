@@ -283,6 +283,7 @@ class App {
     this.blocks = [];
     this.blockLookup = {};
     this.gridLookup = {};
+    this.curComplete = false;
   
     const ctx = this.ctx;
     
@@ -683,6 +684,7 @@ class App {
     
     //restart when all blocks are dead
     if (nonWallCount === 0) {
+      this.curComplete = true;
       this.state.completeEmoji[this.curIndex] = 1; 
       const remaining = this.state.completeEmoji.reduce( (acc, e) => acc + (e === 0 ? 1 : 0), 0);
       this.drawEmojiMap(this.mapCtx);
@@ -1011,13 +1013,16 @@ class App {
   
   draw() {
     const ctx = this.ctx;
+    ctx.save();
    
     if (this.loading) {
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
       ctx.fillStyle = 'black';
-      ctx.font = '20px Arial';
-      ctx.fillText('LOADING', 100, 100);
+      ctx.textAlign = 'center';
+      ctx.font = '40px Arial';
+      ctx.fillText('LOADING', this.canvas.width / 2, 100);
+      ctx.restore();
       return;
     }
 
@@ -1028,18 +1033,28 @@ class App {
       ctx.font = '20px Arial';
       ctx.fillText('No emoji left. Maybe you won?', 100, 100);
       window.requestAnimationFrame( d => this.draw(d) );
+      ctx.restore();
       return;
     }
 
     ctx.drawImage(this.bgCanvas, 0, 0);
     
     ctx.fillStyle = 'black';
+    ctx.font = '14px Arial';
+    ctx.textAlign = 'left';
     const scoreX = 0;
     const scoreY = 618;
     ctx.fillText(this.formatValue(this.state.black, 'floor'), scoreX + 30, scoreY + 20);
     ctx.fillText(this.formatValue(this.state.r, 'floor'), scoreX + 30, scoreY + 35);
     ctx.fillText(this.formatValue(this.state.g, 'floor'), scoreX + 30, scoreY + 50);
     ctx.fillText(this.formatValue(this.state.b, 'floor'), scoreX + 30, scoreY + 65);
+
+    if (this.curComplete) {
+      ctx.fillStyle = 'black';
+      ctx.font = '40px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('COMPLETE!', this.canvas.width / 2, 100);
+    }
 
     const shadowOffset = 4;
     const shadowColor = 'rgba(40,40,40,0.4)';
@@ -1106,7 +1121,7 @@ class App {
 
     this.updateUpgradeEnables();
 
-    //setTimeout(() => window.requestAnimationFrame( d => this.draw(d) ), 1000/60);
+    ctx.restore();
     window.requestAnimationFrame( d => this.draw(d) );
   }
 
