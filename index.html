@@ -11,10 +11,9 @@
     <div id='divTitle' class='area'>
       <img id='logo' src='favicon.png'><span>Emoji Recycling Center</span>
     </div>
-    <canvas id='cmain' width='500' height='700' class='area'></canvas>
-    <canvas id='cmap' width='700' height='700' class='area'></canvas>
     <div id='divUpgrades' class='area'>
       <h2>Upgrades & Info</h2>
+      <div>Black Pixel Count: <span id='blackCount'></span></div>
       <table>
         <tr><th>Name</th><th>Value</th><th>Next Value</th><th>Cost</th><th>Buy</th></tr>
         <tr><td>Tool Strength</td><td id='strVal'> </td><td id='strNext'> </td><td id='strCost'></td><td><button id='btnStr'>Buy</button></td></tr>
@@ -32,6 +31,8 @@
         <input id='chkAudio' type='checkbox' checked>SFX
       </div>
     </div>
+    <canvas id='cmain' width='500' height='700' class='area'></canvas>
+    <canvas id='cmap' width='700' height='700' class='area'></canvas>
     <dialog id='helpContainer' class='area'>
       <div>
       <b>Welcome to the Emoji Recycling Center!</b><br>

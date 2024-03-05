@@ -85,7 +85,7 @@ class App {
   initUI() {
     this.UI = {};
 
-    const UIIDs = 'btnSize,btnStr,btnOpen,openVal,openNext,openCost,sizeVal,sizeNext,sizeCost,strCost,strNext,strVal,cwin,spanWinTime,winBtnClose,winContainer,spanProgress,spanPlayTime,chkAudio,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
+    const UIIDs = 'blackCount,btnSize,btnStr,btnOpen,openVal,openNext,openCost,sizeVal,sizeNext,sizeCost,strCost,strNext,strVal,cwin,spanWinTime,winBtnClose,winContainer,spanProgress,spanPlayTime,chkAudio,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
 
     UIIDs.forEach( id => {
       this.UI[id] = document.getElementById(id);
@@ -1048,6 +1048,7 @@ class App {
     ctx.fillText(this.formatValue(this.state.r, 'floor'), scoreX + 30, scoreY + 35);
     ctx.fillText(this.formatValue(this.state.g, 'floor'), scoreX + 30, scoreY + 50);
     ctx.fillText(this.formatValue(this.state.b, 'floor'), scoreX + 30, scoreY + 65);
+    this.UI.blackCount.innerText = this.formatValue(this.state.black, 'floor');
 
     if (this.curComplete) {
       ctx.fillStyle = 'black';
@@ -1162,9 +1163,11 @@ class App {
 
   
   onmousemove(e) {    
-    this.canvasClientRect = this.canvas.getBoundingClientRect();    
-    this.mousex = e.clientX - this.canvasClientRect.left;
-    this.mousey = e.clientY - this.canvasClientRect.top;    
+    this.canvasClientRect = this.canvas.getBoundingClientRect();
+    if (e.buttons !== 1) {
+      this.mousex = e.clientX - this.canvasClientRect.left;
+      this.mousey = e.clientY - this.canvasClientRect.top;
+    }
   }
 
 
