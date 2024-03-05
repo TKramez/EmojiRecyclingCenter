@@ -3,8 +3,7 @@
 /*
 
 TODO:
-apply upgrades
-  funnel opening size
+format numbers more nicely
 balance upgrades
 */
 
@@ -72,7 +71,11 @@ class App {
 
     this.UI.btnSize.onclick = () => this.buyUpgrade('tSize');
     this.UI.btnStr.onclick = () => this.buyUpgrade('str');
-    this.UI.btnOpen.onclick = () => this.buyUpgrade('oSize');
+    this.UI.btnOpen.onclick = () => {
+      this.buyUpgrade('oSize');
+      this.createBackground();
+      this.initFunnelBlocks();
+    }
 
     this.UI.resetYes.onclick = () => {
       app.reset();
@@ -366,11 +369,28 @@ class App {
     this.lastDropTime = Infinity;
     this.highlightTime = false;
 
+    this.initFunnelBlocks();
+
+
+  }
+
+  initFunnelBlocks() {
+    //remove any old funnel
+    //funnel is any block with wall = true
+    this.blocks = this.blocks.filter( b => {
+      if (b.wall) {
+        this.gridLookup[`${b.x},${b.y}`] = undefined;
+        return false;
+      }
+      return true;
+    });
 
     //add funnel walls
-    for (let x = 0; x < this.canvas.width / 2 - size; x += size) {
+    const oSize = this.getUpgradeStrength('oSize');
+    const oSizeHalf = oSize / 2;
+    for (let x = 0; x < this.canvas.width / 2 - (this.blockSize * oSizeHalf); x += this.blockSize) {
       for (let ydepth = 0; ydepth < 2; ydepth++) {
-        const y = x + 55 * size + ydepth * size;
+        const y = x + 55 * this.blockSize + ydepth * this.blockSize;
         for (let i = 0; i < 2; i++) {
           const thisX = i === 0 ? x : this.roundToGrid(this.canvas.width) - x;
           const newBlock = {
@@ -390,7 +410,6 @@ class App {
         }
       }
     }
-
   }
   
   roundToMultiple(f, m) {
@@ -402,6 +421,9 @@ class App {
   }
 
   getUpgradeStrength(name, next) {
+    if (name === 'oSize') {
+      return this.upgrades[name].base + (this.state[name] + (next ? 1 : 0)) * 2;
+    }
     return this.upgrades[name].base * Math.pow(this.upgrades[name].factor, this.state[name] + (next ? 1 : 0));
   }
 
@@ -420,15 +442,15 @@ class App {
 
   updateUpgradeUI() {
     this.UI.strVal.innerText = this.getUpgradeStrength('str').toFixed(1); 
-    this.UI.strNext.innerText = this.getUpgradeStrength('str').toFixed(1);
+    this.UI.strNext.innerText = this.getUpgradeStrength('str', true).toFixed(1);
     this.UI.strCost.innerText = this.getUpgradeCost('str');
 
     this.UI.sizeVal.innerText = this.getUpgradeStrength('tSize').toFixed(1); 
-    this.UI.sizeNext.innerText = this.getUpgradeStrength('tSize').toFixed(1);
+    this.UI.sizeNext.innerText = this.getUpgradeStrength('tSize', true).toFixed(1);
     this.UI.sizeCost.innerText = this.getUpgradeCost('tSize');
 
     this.UI.openVal.innerText = this.getUpgradeStrength('oSize').toFixed(1); 
-    this.UI.openNext.innerText = this.getUpgradeStrength('oSize').toFixed(1);
+    this.UI.openNext.innerText = this.getUpgradeStrength('oSize', true).toFixed(1);
     this.UI.openCost.innerText = this.getUpgradeCost('oSize');
 
     this.updateUpgradeEnables();
@@ -665,7 +687,9 @@ class App {
     }
 
     //funnel
-    for (let x = 0; x < this.canvas.width / 2 - this.blockSize; x += this.blockSize) {
+    const oSize = this.getUpgradeStrength('oSize');
+    const oSizeHalf = oSize / 2;
+    for (let x = 0; x < this.canvas.width / 2 - (this.blockSize * oSizeHalf); x += this.blockSize) {
       for (let ydepth = 0; ydepth < 40; ydepth++) {
         const y = x + 55 * this.blockSize + ydepth * this.blockSize;
         for (let i = 0; i < 2; i++) {
@@ -675,7 +699,6 @@ class App {
           const newg = 128 + 15 * Math.sin(Math.random() * 10);
           const newb = 128 + 15 * Math.sin(Math.random() * 10);
 
-          //ctx.fillStyle = `rgb(${newr},${newg},${newb})`;
           ctx.fillStyle = `hsl(0, 0%, ${50 + 5 * Math.sin(Math.random() * 10)}%)`;
           const wx = 0.5 * Math.sin(Math.random() * 10);
           const wy = 0.5 * Math.sin(Math.random() * 10);
