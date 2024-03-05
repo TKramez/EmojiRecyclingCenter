@@ -34,9 +34,9 @@ button {
   background: white;
 }
 
-#divTitle {
+.divTitle {
   padding: 5px;
-  font-size: 40px;
+  font-size: 32px;
   font-weight: 600;
   display: grid;
   grid-template-columns: 64px 1fr;
@@ -45,7 +45,8 @@ button {
 }
 
 #logo {
-  height: 64px;
+  height: 48px;
+  filter: drop-shadow(4px 4px 3px hsla(0, 0%, 0%, 45%));
 }
 
 .area {
@@ -75,4 +76,17 @@ button {
   grid-template-columns: 513px 1fr;
   grid-row-gap: 5px;
   align-items: start;
+}
+
+td {
+  border: 1px solid black;
+  padding: 3px;
+}
+
+table {
+  padding: 5px 0px 5px 0px;
+}
+
+#buttonRow {
+  padding-top: 5px;
 }
