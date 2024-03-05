@@ -4,12 +4,11 @@
 
 TODO:
 use currency to buy other emoji and upgrades
-show upgrades and allow purchase
+allow purchase of upgrades
   funnel opening size
   tool strength
   cursor size
-save sfx enabled state
-
+apply upgrades
 */
 
 class App {
@@ -72,6 +71,10 @@ class App {
     };
 
 
+    this.UI.chkAudio.checked = this.state.sfx;
+    this.UI.chkAudio.onchange = () => this.state.sfx = this.UI.chkAudio.checked;
+
+
     this.UI.winBtnClose.onclick = () => {
       document.querySelector('body').classList.remove('blur2px');
       this.UI.winContainer.close();
@@ -128,6 +131,10 @@ class App {
 
     this.UI.btnSave.onclick = () => {
       this.saveToStorage();
+      document.querySelector('body').style.cursor = 'progress';
+      setTimeout(() => {
+        document.querySelector('body').style.cursor = '';
+      }, 1000);
     }
   }
 
@@ -186,7 +193,8 @@ class App {
       g: 0,
       b: 0,
       black: 0,
-      completeEmoji: (new Array(this.emojiCount)).fill(0)
+      completeEmoji: (new Array(this.emojiCount)).fill(0),
+      sfx: true
     };
 
     if (rawState !== null) {
