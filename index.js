@@ -6,6 +6,8 @@ TODO:
 balance upgrades
 add auto-advance as an upgrade
 can we make multiple tick sounds?
+when the game is over, unlock "creative mode" which brings back all emoji
+  and allows the user to select tool strength & size at will
 */
 
 class App {
@@ -1119,6 +1121,10 @@ class App {
       });
     }
 
+    ctx.fillStyle = 'black';
+    ctx.font = '20px Arial';
+    ctx.fillText(`#${this.curIndex + 1}`, 45, 35); 
+
     //cursor
     ctx.fillStyle = 'rgba(38,38,38,0.2)';
     ctx.beginPath();
@@ -1312,10 +1318,14 @@ class App {
     this.buildMapImgCanvas();
     this.drawEmojiMap(this.mapCtx);
 
-    for (let i = 0; i < this.emojiCount; i++) {
-      if (this.state.completeEmoji[i] === 1) {continue;}
-      this.init(i);
-      break;
+    if (this.state.completeEmoji[0] == 1) {
+      for (let i = this.emojiCount - 1; i >= 0; i--) {
+        if (this.state.completeEmoji[i] === 1) {continue;}
+        this.init(i);
+        break;
+      }
+    } else {
+      this.init(0);
     }
     
     setInterval(() => this.update(), 1000 / 60);
