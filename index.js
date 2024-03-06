@@ -498,9 +498,10 @@ class App {
 
   calcBlockStrength(block) {
     //gain 1 this.r/g/b for every 255 of r/g/b in block down the hole
-    const rs = Math.pow(this.state.b + 1, 0.5) / (block.rgb.r + 1);
-    const gs = Math.pow(this.state.r + 1, 0.5) / (block.rgb.g + 1);
-    const bs = Math.pow(this.state.g + 1, 0.5) / (block.rgb.b + 1);
+    const colorPow = 0.5;
+    const rs = Math.pow(this.state.b + 1, colorPow) / (block.rgb.r + 1);
+    const gs = Math.pow(this.state.r + 1, colorPow) / (block.rgb.g + 1);
+    const bs = Math.pow(this.state.g + 1, colorPow) / (block.rgb.b + 1);
     const blacks = 0.1;
     const totals = block.black ? blacks : (rs + gs + bs) / 3;
     return totals * this.getUpgradeStrength('str');
@@ -699,6 +700,7 @@ class App {
       this.curComplete = true;
       this.state.completeEmoji[this.curIndex] = 1; 
       const remaining = this.state.completeEmoji.reduce( (acc, e) => acc + (e === 0 ? 1 : 0), 0);
+      //TODO: only draw this once per completion
       this.drawEmojiMap(this.mapCtx);
       if (remaining === 0) {
         this.showWin();
@@ -985,26 +987,40 @@ class App {
     //black in [0, 1000]
 
     ctx.save();
-    const rscale = 320; //this is just a little bit smaller than width/2
+    //const rscale = 320; //this is just a little bit smaller than width/2
+    //set rscale so that the emoji are all on the map
+
+    let minx = Infinity;
+    let maxx = -Infinity;
+    let miny = Infinity;
+    let maxy = -Infinity;
+    for (let i = 0; i < this.emojiCount; i++) {
+      if (this.state.completeEmoji[i] === 1) { continue; }
+
+      const r = this.emojiPositions[i].r;
+      const a = this.emojiPositions[i].a;
+      minx = Math.min(minx, r * Math.cos(a));
+      miny = Math.min(miny, r * Math.sin(a));
+      maxx = Math.max(maxx, r * Math.cos(a));
+      maxy = Math.max(maxy, r * Math.sin(a));
+    }
+
+    const rscaleMinX = Math.abs((width / 2) / minx);
+    const rscaleMaxX = Math.abs((width / 2) / maxx);
+    const rscaleMinY = Math.abs((height / 2) / miny);
+    const rscaleMaxY = Math.abs((height / 2) / maxy);
+    let rscale = 0.8 * Math.min(rscaleMinX, rscaleMaxX, rscaleMinY, rscaleMaxY);
+    if (rscale === Infinity) {rscale = 800;}
+    console.log(minx, maxx, miny, maxy, rscale);
+
     this.mapLocations = [];
     for (let i = 0; i < this.emojiCount; i++) {
-      if (this.state.completeEmoji[i] === 1) {
-        this.mapLocations.push({x0: Infinity, y0: Infinity, x1: Infinity, y1: Infinity});
-        continue;
-      }
-      const cx = 0;
-      const cy = 0;
-      const mina = 0;
-      const maxa = 2 * Math.PI;
-      let a = this.emojiPositions[i].a;
-      if (a < mina || a > maxa) {
-        this.mapLocations.push({x0: Infinity, y0: Infinity, x1: Infinity, y1: Infinity});
-        continue;
-      }
-      a = this.lmap(a, mina, maxa, 0, 2 * Math.PI); 
+      if (this.state.completeEmoji[i] === 1) { continue; }
 
-      const x = cx + (width / 2) + rscale * Math.cos(a) * this.emojiPositions[i].r;
-      const y = cy + (height / 2) + rscale * Math.sin(a) * this.emojiPositions[i].r;
+      let a = this.emojiPositions[i].a;
+
+      const x = (width / 2) + rscale * Math.cos(a) * this.emojiPositions[i].r;
+      const y = (height / 2) + rscale * Math.sin(a) * this.emojiPositions[i].r;
       const emojiBounds = this.emojiBounds[i];
       this.mapLocations.push({
         x0: x + emojiBounds.minx,
@@ -1063,20 +1079,28 @@ class App {
     this.UI.blackCount.innerText = this.formatValue(this.state.black, 'floor');
 
     if (this.curComplete) {
+      ctx.save();
       ctx.fillStyle = 'black';
       ctx.font = '40px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('COMPLETE!', this.canvas.width / 2, 100);
+      ctx.restore();
     }
 
     const shadowOffset = 4;
     const shadowColor = 'rgba(40,40,40,0.4)';
 
-    if (this.state.shake) {
-      ctx.translate(this.shakeMag * Math.sin(this.curTime), this.shakeMag * Math.sin(this.curTime + 33)); 
-    }
 
     if (this.blocks !== undefined) {
+
+      ctx.fillStyle = 'black';
+      ctx.font = '20px Arial';
+      ctx.fillText(`#${this.curIndex + 1}`, 45, 35); 
+
+      if (this.state.shake) {
+        ctx.translate(this.shakeMag * Math.sin(this.curTime), this.shakeMag * Math.sin(this.curTime + 33)); 
+      }
+
       this.blocks.forEach( b => {
         if (b.invisible) {return;}
         //if (b.strength < this.maxStr) {
@@ -1115,20 +1139,18 @@ class App {
             ctx.fillStyle = `hsl(${b.hsl.h}, ${b.hsl.s}%, ${b.hsl.l * 0.9}%)`;
           } else {
             ctx.fillStyle = b.c;
+            //ctx.fillStyle = `hsl(${this.lmap(b.strength, 0, this.maxStr, 0, 270)}, 100%, 50%)`;
           }
           ctx.fillRect(b.x, b.y, this.blockSize, this.blockSize);
         }
       });
     }
 
-    ctx.fillStyle = 'black';
-    ctx.font = '20px Arial';
-    ctx.fillText(`#${this.curIndex + 1}`, 45, 35); 
-
     //cursor
     ctx.fillStyle = 'rgba(38,38,38,0.2)';
     ctx.beginPath();
     const cursorSize = this.getUpgradeStrength('tSize');
+
     ctx.arc(this.mousex, this.mousey, cursorSize, 0, Math.PI * 2);
     ctx.fill();
 
@@ -1219,7 +1241,7 @@ class App {
     for (let i = this.mapLocations.length - 1; i >= 0; i--) {
       const box = this.mapLocations[i];
       if (x >= box.x0 && x <= box.x1 && y >= box.y0 && y <= box.y1) {
-        this.init(i);
+        this.init(box.i);
         break;
       }
     }
