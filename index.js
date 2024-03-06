@@ -4,6 +4,8 @@
 
 TODO:
 balance upgrades
+add auto-advance as an upgrade
+can we make multiple tick sounds?
 */
 
 class App {
@@ -19,9 +21,9 @@ class App {
     this.emojiCount = 758;
 
     this.upgrades = {
-      str:   {base: 0.1, factor: 10, costBase: 100,   costFactor: 10},
-      tSize: {base: 4,   factor: 2,  costBase: 1000,  costFactor: 10},
-      oSize: {base: 2,   factor: 1,  costBase: 10000, costFactor: 20}
+      str:   {base: 0.1, factor: 2,  costBase: 10,   costFactor: 3},
+      tSize: {base: 4,   factor: 2,  costBase: 100,  costFactor: 5},
+      oSize: {base: 2,   factor: 1,  costBase: 1000, costFactor: 20}
     };
 
 
@@ -38,6 +40,7 @@ class App {
     this.blockSize =  8;
     this.maxStr = 100;
     this.canvasClientRect = this.canvas.getBoundingClientRect();    
+    this.shakeMag = 0;
 
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     this.audioContext = new AudioContext();
@@ -85,7 +88,7 @@ class App {
   initUI() {
     this.UI = {};
 
-    const UIIDs = 'blackCount,btnSize,btnStr,btnOpen,openVal,openNext,openCost,sizeVal,sizeNext,sizeCost,strCost,strNext,strVal,cwin,spanWinTime,winBtnClose,winContainer,spanProgress,spanPlayTime,chkAudio,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
+    const UIIDs = 'blackCount,btnSize,btnStr,btnOpen,openVal,openNext,openCost,sizeVal,sizeNext,sizeCost,strCost,strNext,strVal,cwin,spanWinTime,winBtnClose,winContainer,spanProgress,spanPlayTime,chkAudio,chkShake,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
 
     UIIDs.forEach( id => {
       this.UI[id] = document.getElementById(id);
@@ -108,6 +111,9 @@ class App {
 
     this.UI.chkAudio.checked = this.state.sfx;
     this.UI.chkAudio.onchange = () => this.state.sfx = this.UI.chkAudio.checked;
+
+    this.UI.chkShake.checked = this.state.shake;
+    this.UI.chkShake.onchange = () => this.state.shake = this.UI.chkShake.checked;
 
 
     this.UI.winBtnClose.onclick = () => {
@@ -230,6 +236,7 @@ class App {
       black: 0,
       completeEmoji: (new Array(this.emojiCount)).fill(0),
       sfx: true,
+      shake: true,
       str: 0,
       tSize: 0,
       oSize: 0
@@ -336,15 +343,15 @@ class App {
         if (a === 255) {
           const wx =  wiggle * Math.sin(Math.random() * 10);
           const wy =  wiggle * Math.sin(Math.random() * 10);
-          const newr = r + colorShake * Math.sin(Math.random() * 10);
-          const newg = g + colorShake * Math.sin(Math.random() * 10);
-          const newb = b + colorShake * Math.sin(Math.random() * 10);
+          const newr = Math.max(0, Math.min(255, r + colorShake * Math.sin(Math.random() * 10)));
+          const newg = Math.max(0, Math.min(255, g + colorShake * Math.sin(Math.random() * 10)));
+          const newb = Math.max(0, Math.min(255, b + colorShake * Math.sin(Math.random() * 10)));
 
           
           //const hsl = this.rgbToHsl(newr, newg, newb);
           const hsl = this.rgbToHsl(r, g, b);
-          hsl.h = hsl.h + 5 * Math.sin(Math.random() * 10);
-          hsl.l = hsl.l + 5 * Math.sin(Math.random() * 10);
+          hsl.h = Math.max(0, Math.min(360, hsl.h + 2 * Math.sin(Math.random() * 10)));
+          hsl.l = Math.max(0, Math.min(100, hsl.l + 2 * Math.sin(Math.random() * 10)));
           this.colors.push(hsl);
           const black = r < 5 && g < 5 && b < 5; 
           
@@ -519,6 +526,8 @@ class App {
 
 
     let playTick = false;
+    const curTime = (new Date()).getTime();
+    this.curTime = curTime;
     this.blocks.forEach( b => {
       
       if (b.wall) {return;}
@@ -563,12 +572,12 @@ class App {
               this.lastDropTime = (new Date()).getTime();
               
               playTick = true;
+              this.shakeMag = 2;
             }
           }
         }
       }
 
-      const curTime = (new Date()).getTime();
       if ((curTime - this.lastDropTime) > (1000 * 20)) {
         this.highlightTime = true;
       }
@@ -623,7 +632,7 @@ class App {
       if (b.landed) {
         landedCount++;
         //don't do sand physics every time
-        if (Math.random > 0.25) {return;}
+        if (Math.random > 0.95) {return;}
 
         //do the sand dance        
         if (this.gridLookup[`${b.x},${b.y+this.blockSize}`] || b.y > maxY) {
@@ -654,6 +663,7 @@ class App {
       }
     });
 
+    this.shakeMag = Math.max(0, this.shakeMag - 0.5);
     if (playTick && this.UI.chkAudio.checked) {
       this.audioElement.play();
     }
@@ -1059,6 +1069,10 @@ class App {
 
     const shadowOffset = 4;
     const shadowColor = 'rgba(40,40,40,0.4)';
+
+    if (this.state.shake) {
+      ctx.translate(this.shakeMag * Math.sin(this.curTime), this.shakeMag * Math.sin(this.curTime + 33)); 
+    }
 
     if (this.blocks !== undefined) {
       this.blocks.forEach( b => {
