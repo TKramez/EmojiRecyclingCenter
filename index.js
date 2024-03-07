@@ -68,6 +68,21 @@ class App {
       this.audioElements.push(audioElement);
     });
 
+    this.ambientTracks = [];
+    const vol = {
+      assemblyFade: 0.05,
+      constructionFade: 0.75,
+    };
+    'assemblyFade,constructionFade'.split(',').forEach( audioName => { 
+    //'constructionFade'.split(',').forEach( audioName => { 
+      const audioElement = new Audio(`./${audioName}.mp3`);
+      const track = this.audioContext.createMediaElementSource(audioElement);
+      track.connect(this.audioContext.destination);
+      audioElement.loop = true;
+      audioElement.volume = vol[audioName];
+      this.ambientTracks.push(audioElement);
+    });
+
 
     this.blocks = [];
     this.importEmojiData();
@@ -117,7 +132,7 @@ class App {
   initUI() {
     this.UI = {};
 
-    const UIIDs = 'msAutoRow,msOpeningRow,msLaserRow,msFurnaceRow,msOpeningMs,msOpeningEnable,msFurnaceMs,msFurnaceEnable,msLaserMs,msLaserEnable,msAutoMs,msAutoEnable,emojiLink,blackCount,btnSize,btnStr,btnOpen,openVal,openNext,openCost,sizeVal,sizeNext,sizeCost,strCost,strNext,strVal,cwin,spanWinTime,winBtnClose,winContainer,spanProgress,spanPlayTime,chkAudio,chkShake,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
+    const UIIDs = 'chkAmbient,msAutoRow,msOpeningRow,msLaserRow,msFurnaceRow,msOpeningMs,msOpeningEnable,msFurnaceMs,msFurnaceEnable,msLaserMs,msLaserEnable,msAutoMs,msAutoEnable,emojiLink,blackCount,btnSize,btnStr,btnOpen,openVal,openNext,openCost,sizeVal,sizeNext,sizeCost,strCost,strNext,strVal,cwin,spanWinTime,winBtnClose,winContainer,spanProgress,spanPlayTime,chkAudio,chkShake,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
 
     UIIDs.forEach( id => {
       this.UI[id] = document.getElementById(id);
@@ -165,6 +180,18 @@ class App {
 
     this.UI.chkShake.checked = this.state.shake;
     this.UI.chkShake.onchange = () => this.state.shake = this.UI.chkShake.checked;
+
+    this.UI.chkAmbient.checked = this.state.ambient;
+    this.UI.chkAmbient.onchange = () => {
+      this.state.ambient = this.UI.chkAmbient.checked;
+      if (this.tryAudio) {
+        if (this.state.ambient) {
+          this.ambientTracks.forEach( t => t.play() );
+        } else {
+          this.ambientTracks.forEach( t => t.pause() );
+        }
+      }
+    };
 
 
     this.UI.winBtnClose.onclick = () => {
@@ -286,6 +313,7 @@ class App {
       b: 0,
       black: 0,
       completeEmoji: (new Array(this.emojiCount)).fill(0),
+      ambient: true,
       sfx: true,
       shake: true,
       str: 0,
@@ -613,6 +641,10 @@ class App {
 
     if (this.audioContext.state === 'suspended' && this.tryAudio) {
       this.audioContext.resume();
+
+      if (this.state.ambient) {
+        this.ambientTracks.forEach( t => t.play() );
+      }
     }
 
 
