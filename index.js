@@ -35,6 +35,14 @@ class App {
       Furnace: 400
     }
 
+    this.completeBlocks = [
+      '1110011001101101110010001110111011101',
+      '1000100101010101001010001000010010001',
+      '1000100101010101110010001100010011001',
+      '1000100101010101000010001000010010000',
+      '1110011001010101000011101110010011101'
+    ];
+
     this.loadFromStorage();
 
     this.initUI();
@@ -1211,10 +1219,15 @@ class App {
 
     if (this.curComplete) {
       ctx.save();
-      ctx.fillStyle = 'black';
-      ctx.font = '40px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('COMPLETE!', this.canvas.width / 2, 100);
+      this.completeBlocks.forEach( (row, y) => {
+        row.split('').forEach( (block, x) => {
+          if (block === '0') {return;}
+          ctx.fillStyle = `rgb(${15 * Math.sin(234 * x + 8695 * y)}, ${15 * Math.sin(x * 712 + y * 813)}, ${15 * Math.sin(x * 2144 + y * 32)})`;
+          const cx = 100 + x * this.blockSize + 0.5 * Math.sin(x * 453 + y * 53.2 + this.curIndex);
+          const cy = 400 + y * this.blockSize + 0.5 * Math.sin(x * 121 + y * 4932 + this.curIndex);
+          ctx.fillRect(cx, cy, this.blockSize, this.blockSize);
+        });
+      });
       ctx.restore();
     }
 
@@ -1241,7 +1254,7 @@ class App {
 
     if (this.blocks !== undefined) {
 
-      ctx.fillStyle = 'black';
+      ctx.fillStyle = 'hsla(0, 0%, 0%, 0.2)';
       ctx.font = '20px Arial';
       ctx.fillText(`#${this.curIndex + 1}`, 45, 35); 
 
