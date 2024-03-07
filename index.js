@@ -33,7 +33,7 @@ class App {
       Opening: 200,
       Laser: 300,
       Furnace: 400
-    }
+    };
 
     this.completeBlocks = [
       '1110011001101101110010001110111011101',
@@ -142,7 +142,7 @@ class App {
     this.UI.msFurnaceEnable.onchange = () => {
       this.state.furnaceOn = this.UI.msFurnaceEnable.checked;
       //this.createBackground(); 
-    }
+    };
 
     this.progress = this.state.completeEmoji.reduce( (acc, e) => acc + e );
     this.updateMilestoneUI();
