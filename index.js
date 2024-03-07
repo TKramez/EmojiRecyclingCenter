@@ -114,7 +114,7 @@ class App {
     this.updateUpgradeUI();
 
     'Auto,Opening,Laser,Furnace'.split(',').forEach( ms => {
-      this.UI[`ms${ms}Ms`].innerText = `${this.milestones[ms]} emojis`;
+      this.UI[`ms${ms}Ms`].innerText = `${this.milestones[ms]} emojis recycled`;
     });
 
     this.UI.msAutoEnable.checked = this.state.autoAdvance;
