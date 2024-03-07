@@ -7,6 +7,13 @@ balance upgrades
 when the game is over, unlock "creative mode" which brings back all emoji
   and allows the user to select tool strength & size at will
 ideally, click pitch should be related to block base strength
+add option to disable ambient sound when page is hidden
+document.onvisibilitychange = () => { if (document.hidden) { app.ambientTracks.forEach( t => t.pause()); } else { app.ambientTracks.forEach( t => t.play()); } }
+*/
+
+/*
+  constructionFade.mp3 faded in/out based on https://pixabay.com/sound-effects/construction-amb-58116/
+  assemblyFade.mp3 looped based on https://pixabay.com/sound-effects/assembly-line-factory-atmo-field-recording-29423/
 */
 
 class App {
@@ -132,7 +139,7 @@ class App {
   initUI() {
     this.UI = {};
 
-    const UIIDs = 'chkAmbient,msAutoRow,msOpeningRow,msLaserRow,msFurnaceRow,msOpeningMs,msOpeningEnable,msFurnaceMs,msFurnaceEnable,msLaserMs,msLaserEnable,msAutoMs,msAutoEnable,emojiLink,blackCount,btnSize,btnStr,btnOpen,openVal,openNext,openCost,sizeVal,sizeNext,sizeCost,strCost,strNext,strVal,cwin,spanWinTime,winBtnClose,winContainer,spanProgress,spanPlayTime,chkAudio,chkShake,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
+    const UIIDs = 'chkAudioBkg,chkAmbient,msAutoRow,msOpeningRow,msLaserRow,msFurnaceRow,msOpeningMs,msOpeningEnable,msFurnaceMs,msFurnaceEnable,msLaserMs,msLaserEnable,msAutoMs,msAutoEnable,emojiLink,blackCount,btnSize,btnStr,btnOpen,openVal,openNext,openCost,sizeVal,sizeNext,sizeCost,strCost,strNext,strVal,cwin,spanWinTime,winBtnClose,winContainer,spanProgress,spanPlayTime,chkAudio,chkShake,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
 
     UIIDs.forEach( id => {
       this.UI[id] = document.getElementById(id);
@@ -190,6 +197,21 @@ class App {
         } else {
           this.ambientTracks.forEach( t => t.pause() );
         }
+      }
+    };
+
+    this.UI.chkAudioBkg.checked = this.state.bgAudio;
+    this.UI.chkAudioBkg.onchange = () => this.state.bgAudio = this.UI.chkAudioBkg.checked;
+
+    document.onvisibilitychange = () => {
+      if (!this.state.bgAudio) {
+        app.ambientTracks.forEach( t => {
+          if (document.hidden) {
+            t.pause();
+          } else {
+            t.play();
+          }
+        });
       }
     };
 
@@ -315,6 +337,7 @@ class App {
       completeEmoji: (new Array(this.emojiCount)).fill(0),
       ambient: true,
       sfx: true,
+      bgAudio: true,
       shake: true,
       str: 0,
       tSize: 0,
