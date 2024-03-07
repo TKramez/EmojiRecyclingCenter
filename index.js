@@ -4,7 +4,6 @@
 
 TODO:
 balance upgrades
-add auto-advance as an upgrade
 can we make multiple tick sounds?
 when the game is over, unlock "creative mode" which brings back all emoji
   and allows the user to select tool strength & size at will
@@ -26,10 +25,15 @@ class App {
     this.upgrades = {
       str:   {base: 0.1, factor: 2,  costBase: 10,   costFactor: 3},
       tSize: {base: 4,   factor: 2,  costBase: 100,  costFactor: 5},
-      oSize: {base: 2,   factor: 1,  costBase: 1000, costFactor: 3}
+      oSize: {base: 2,   factor: 1,  costBase: 100, costFactor: 3}
     };
 
-
+    this.milestones = {
+      Auto: 100,
+      Opening: 200,
+      Laser: 300,
+      Furnace: 400
+    }
 
     this.loadFromStorage();
 
@@ -44,6 +48,7 @@ class App {
     this.maxStr = 100;
     this.canvasClientRect = this.canvas.getBoundingClientRect();    
     this.shakeMag = 0;
+    this.progress = 0;
 
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     this.audioContext = new AudioContext();
@@ -88,16 +93,47 @@ class App {
       return `${prefix}${this.roundExp(value, roundType)}${suffix}`;
     }
   }
+
+  updateMilestoneUI() {
+    'Auto,Opening,Laser,Furnace'.split(',').forEach( ms => {
+      const enabled = this.progress > this.milestones[ms];
+      this.UI[`ms${ms}Row`].style.color = enabled ? 'black' : 'hsl(0, 0%, 80%)';
+      this.UI[`ms${ms}Enable`].disabled = !enabled;
+    });
+  }
+
   initUI() {
     this.UI = {};
 
-    const UIIDs = 'emojiLink,blackCount,btnSize,btnStr,btnOpen,openVal,openNext,openCost,sizeVal,sizeNext,sizeCost,strCost,strNext,strVal,cwin,spanWinTime,winBtnClose,winContainer,spanProgress,spanPlayTime,chkAudio,chkShake,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
+    const UIIDs = 'msAutoRow,msOpeningRow,msLaserRow,msFurnaceRow,msOpeningMs,msOpeningEnable,msFurnaceMs,msFurnaceEnable,msLaserMs,msLaserEnable,msAutoMs,msAutoEnable,emojiLink,blackCount,btnSize,btnStr,btnOpen,openVal,openNext,openCost,sizeVal,sizeNext,sizeCost,strCost,strNext,strVal,cwin,spanWinTime,winBtnClose,winContainer,spanProgress,spanPlayTime,chkAudio,chkShake,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
 
     UIIDs.forEach( id => {
       this.UI[id] = document.getElementById(id);
     });
 
     this.updateUpgradeUI();
+
+    'Auto,Opening,Laser,Furnace'.split(',').forEach( ms => {
+      this.UI[`ms${ms}Ms`].innerText = `${this.milestones[ms]} emojis`;
+    });
+
+    this.UI.msAutoEnable.checked = this.state.autoAdvance;
+    this.UI.msAutoEnable.onchange = () => this.state.autoAdvance = this.UI.msAutoEnable.checked;
+    this.UI.msOpeningEnable.checked = this.state.maxOpen;
+    this.UI.msOpeningEnable.onchange = () => {
+      this.state.maxOpen = this.UI.msOpeningEnable.checked;
+      this.init(this.curIndex);
+    };
+    this.UI.msLaserEnable.checked = this.state.lasersOn;
+    this.UI.msLaserEnable.onchange = () => this.state.lasersOn = this.UI.msLaserEnable.checked;
+    this.UI.msFurnaceEnable.checked = this.state.furnaceOn;
+    this.UI.msFurnaceEnable.onchange = () => {
+      this.state.furnaceOn = this.UI.msFurnaceEnable.checked;
+      //this.createBackground(); 
+    }
+
+    this.progress = this.state.completeEmoji.reduce( (acc, e) => acc + e );
+    this.updateMilestoneUI();
 
     this.UI.btnSize.onclick = () => this.buyUpgrade('tSize');
     this.UI.btnStr.onclick = () => this.buyUpgrade('str');
@@ -242,7 +278,11 @@ class App {
       shake: true,
       str: 0,
       tSize: 0,
-      oSize: 0
+      oSize: 0,
+      autoAdvance: false,
+      lasersOn: false,
+      furnaceOn: false,
+      maxOpen: false
     };
 
     if (rawState !== null) {
@@ -288,12 +328,29 @@ class App {
     return{h: h, s: s * 100, l: l * 100};
   }
 
+  getRandomIncompleteEmojiIndex() {
+    const incompleteEmoji = [];
+    this.state.completeEmoji.forEach( (complete, i) => {
+      if (complete === 0) {
+        incompleteEmoji.push(i);
+      }
+    });
+
+    if (incompleteEmoji.length > 0) {
+      return incompleteEmoji[Math.floor(Math.random() * incompleteEmoji.length)];
+    } else {
+      return undefined;
+    }
+  }
+
   init(emojiIndexForce) {
   
     this.blocks = [];
     this.blockLookup = {};
     this.gridLookup = {};
     this.curComplete = false;
+    this.mousex = -Infinity;
+    this.mousey = -Infinity;
 
   
     const ctx = this.ctx;
@@ -304,9 +361,16 @@ class App {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
-    const emojiIndex = emojiIndexForce ?? Math.floor(Math.random() * this.emojiCount);
+    let emojiIndex;
+    if (emojiIndexForce !== undefined) {
+      emojiIndex = emojiIndexForce;
+    } else {
+      emojiIndex = this.getRandomIncompleteEmojiIndex();
+    }
+
     this.curIndex = emojiIndex;
     this.UI.emojiLink.href = `https://emojipedia.org/search?q=${encodeURI(this.emojiList[emojiIndex])}`;
+    
     //const emojiIndex = 0;
     //console.log(emojiIndex);
     //const emoji = this.emojiList[emojiIndex];
@@ -412,6 +476,7 @@ class App {
   }
 
   initFunnelBlocks() {
+    if (this.state.maxOpen) {return;}
     //remove any old funnel
     //funnel is any block with wall = true
     this.blocks = this.blocks.filter( b => {
@@ -510,6 +575,14 @@ class App {
     return totals * this.getUpgradeStrength('str');
   }
 
+  getLaserHeight() {
+    const height = 430;
+    const base = 20;
+    //return (this.curTime * 0.1) % height + base;
+    const T = 1000 * 5;
+    return 2 * Math.abs(this.curTime / T - Math.floor(this.curTime / T + 1/2)) * height + base;
+  }
+
   update() {
     let landedCount = 0;
     let moveCount = 0;
@@ -534,6 +607,8 @@ class App {
     let playTick = false;
     const curTime = (new Date()).getTime();
     this.curTime = curTime;
+    const laserHeight = this.getLaserHeight();
+
     this.blocks.forEach( b => {
       
       if (b.wall) {return;}
@@ -546,8 +621,14 @@ class App {
         const dx = this.mousex - (b.x + halfBlock);
         const dy = this.mousey - (b.y + halfBlock);
         const d2 = dx * dx + dy * dy;
+        const cursorInRange = d2 < activeCursorDist;
 
-        if (d2 < activeCursorDist) {        
+        const furnaceActive = this.state.furnaceOn;
+
+        const laserHit = this.state.lasersOn &&
+          (laserHeight >= b.y && laserHeight <= (b.y + this.blockSize));
+
+        if (cursorInRange || furnaceActive || laserHit) {
           let onEdge = false;
           for (let dx = -1; dx <= 1; dx++) {
             for (let dy = -1; dy <= 1; dy++) {
@@ -570,8 +651,19 @@ class App {
             }
           }
           if (onEdge) {
-            const effectiveStrength = this.calcBlockStrength(b);
-            b.strength -= effectiveStrength;
+            if (cursorInRange) {
+              const effectiveStrength = this.calcBlockStrength(b);
+              b.strength -= effectiveStrength;
+            }
+
+            if (furnaceActive) {
+              b.strength -= this.getUpgradeStrength('str') / 10.0;
+            }
+
+            if (laserHit) {
+              b.strength -= this.getUpgradeStrength('str');
+            }
+
             if (b.strength <= 0) {
               b.loose = true;
               b.strength = 0;
@@ -671,6 +763,8 @@ class App {
 
     this.shakeMag = Math.max(0, this.shakeMag - 0.5);
     if (playTick && this.UI.chkAudio.checked) {
+      //this causes a pause in chrome dev tools even with a try...catch or
+      //catching the promise rejction
       this.audioElement.play();
     }
 
@@ -706,9 +800,14 @@ class App {
       const remaining = this.state.completeEmoji.reduce( (acc, e) => acc + (e === 0 ? 1 : 0), 0);
       if (remaining === 0 && this.state.gameEnd === undefined) {
         this.showWin();
+      } else {
+        if (this.state.autoAdvance) {
+          this.init();
+        }
       }
-      //this.init();
     }
+
+    this.progress = this.state.completeEmoji.reduce( (acc, e) => acc + e );
     
   }
 
@@ -729,22 +828,24 @@ class App {
     }
 
     //funnel
-    const oSize = this.getUpgradeStrength('oSize');
-    const oSizeHalf = oSize / 2;
-    for (let x = 0; x < this.canvas.width / 2 - (this.blockSize * oSizeHalf); x += this.blockSize) {
-      for (let ydepth = 0; ydepth < 40; ydepth++) {
-        const y = x + 55 * this.blockSize + ydepth * this.blockSize;
-        for (let i = 0; i < 2; i++) {
-          const thisX = i === 0 ? x : this.roundToGrid(this.canvas.width) - x;
+    if (!this.state.maxOpen) {
+      const oSize = this.getUpgradeStrength('oSize');
+      const oSizeHalf = oSize / 2;
+      for (let x = 0; x < this.canvas.width / 2 - (this.blockSize * oSizeHalf); x += this.blockSize) {
+        for (let ydepth = 0; ydepth < 40; ydepth++) {
+          const y = x + 55 * this.blockSize + ydepth * this.blockSize;
+          for (let i = 0; i < 2; i++) {
+            const thisX = i === 0 ? x : this.roundToGrid(this.canvas.width) - x;
 
-          const newr = 128 + 15 * Math.sin(Math.random() * 10);
-          const newg = 128 + 15 * Math.sin(Math.random() * 10);
-          const newb = 128 + 15 * Math.sin(Math.random() * 10);
+            const newr = 128 + 15 * Math.sin(Math.random() * 10);
+            const newg = 128 + 15 * Math.sin(Math.random() * 10);
+            const newb = 128 + 15 * Math.sin(Math.random() * 10);
 
-          ctx.fillStyle = `hsl(0, 0%, ${50 + 5 * Math.sin(Math.random() * 10)}%)`;
-          const wx = 0.5 * Math.sin(Math.random() * 10);
-          const wy = 0.5 * Math.sin(Math.random() * 10);
-          ctx.fillRect(thisX + wx, y + wy, this.blockSize, this.blockSize);
+            ctx.fillStyle = `hsl(0, 0%, ${50 + 5 * Math.sin(Math.random() * 10)}%)`;
+            const wx = 0.5 * Math.sin(Math.random() * 10);
+            const wy = 0.5 * Math.sin(Math.random() * 10);
+            ctx.fillRect(thisX + wx, y + wy, this.blockSize, this.blockSize);
+          }
         }
       }
     }
@@ -768,7 +869,7 @@ class App {
     ctx.fillRect(sideBorder - frameSize, topBorder - frameSize, width + 2 * frameSize, height + 2 * frameSize);
 
     //canvas
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = this.state.furnaceOn ? 'hsl(0, 75%, 67%)' : 'white';
     ctx.fillRect(sideBorder, topBorder, width, height);
 
     //score canvas
@@ -976,6 +1077,12 @@ class App {
       this.emojiBounds.push({minx, maxx, miny, maxy, w: maxx - minx + 1, h: maxy - miny + 1});
     }
     ctx.putImageData(imageData, 0, 0);
+
+    //copy the gun emoji backwards for use as laser
+    ctx.scale(-1, 1);
+    ctx.drawImage(ctx.canvas, 372 * 62, 0, 62, 62, -(this.emojiCount - w + 1) * 62, 62, 62, 62);
+
+
   }
 
 
@@ -1061,7 +1168,8 @@ class App {
       return;
     }
 
-    if (this.blocks === undefined || this.blocks.length === 0) {
+    //if (this.blocks === undefined || this.blocks.length === 0) {
+    if (this.blocks === undefined) {
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
       ctx.fillStyle = 'black';
@@ -1073,6 +1181,14 @@ class App {
     }
 
     ctx.drawImage(this.bgCanvas, 0, 0);
+    const sideBorder = 40;
+    const topBorder = 20;
+    const height = this.bgCanvas.height - (topBorder + 250);
+    const width = this.bgCanvas.width - sideBorder * 2;
+    const furnaceL = 4 * Math.sin(this.curTime / 1000) + 1 * Math.sin(this.curTime / 77 + 7 * Math.sin(this.curTime / 888)) + 70;
+    ctx.fillStyle = this.state.furnaceOn ? `hsl(0, 75%, ${furnaceL}%)` : 'white';
+    ctx.fillRect(sideBorder, topBorder, width, height);
+
     
     ctx.fillStyle = 'black';
     ctx.font = '14px Arial';
@@ -1096,6 +1212,23 @@ class App {
 
     const shadowOffset = 4;
     const shadowColor = 'rgba(40,40,40,0.4)';
+
+    //draw lasers
+    if (this.state.lasersOn) {
+      //ctx.globalCompositionOperation = 'lighter';
+      const laserHeight = this.getLaserHeight();
+      ctx.strokeStyle = 'hsl(195, 75%, 48%)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(0, laserHeight);
+      ctx.lineTo(this.canvas.width, laserHeight);
+      ctx.stroke();
+      //ctx.globalCompositionOperation = 'source-over';
+      const gunEmojiIndex = 372;
+      ctx.drawImage(this.imgCanvas, gunEmojiIndex * 62, 0, 62, 62, this.canvas.width - 50, laserHeight - 27, 62, 62);
+      ctx.drawImage(this.imgCanvas, (this.emojiCount - Math.floor(32767 / 62)) * 62, 62, 62, 62, -10, laserHeight - 27, 62, 62);
+    }
+
 
 
     if (this.blocks !== undefined) {
@@ -1161,8 +1294,8 @@ class App {
     ctx.arc(this.mousex, this.mousey, cursorSize, 0, Math.PI * 2);
     ctx.fill();
 
-    const progress = this.state.completeEmoji.reduce( (acc, e) => acc + e );
-    this.UI.spanProgress.innerText = progress;
+    //const progress = this.state.completeEmoji.reduce( (acc, e) => acc + e );
+    this.UI.spanProgress.innerText = this.progress;
 
     const curTime = this.state.gameEnd ?? (new Date()).getTime();
 
@@ -1350,11 +1483,7 @@ class App {
     this.buildMapImgCanvas();
 
     if (this.state.completeEmoji[0] == 1) {
-      for (let i = this.emojiCount - 1; i >= 0; i--) {
-        if (this.state.completeEmoji[i] === 1) {continue;}
-        this.init(i);
-        break;
-      }
+      this.init();
     } else {
       this.init(0);
     }

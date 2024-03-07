@@ -10,12 +10,13 @@
   <body>
     <div id='gameContainer'>
       <canvas id='cmain' width='500' height='700' class='area'></canvas>
+      <!--<canvas id='cimg' width='500' height='700' class='area'></canvas>-->
       <span id='divUpgrades' class='area'>
         <div class='divTitle'> 
           <img id='logo' src='favicon.png'><span>Emoji Recycling Center</span>
         </div>
-        <h2>Upgrades & Info</h2>
-        <div>Black Pixel Count: <span id='blackCount'></span></div>
+        <h2>Upgrades, Milestones, & Info</h2>
+        <div><b>Black Pixel Count:</b> <span id='blackCount'></span></div>
         <table>
           <tr><th>Name</th><th>Value</th><th>Next Value</th><th>Cost</th><th>Buy</th></tr>
           <tr><td>Tool Strength</td><td id='strVal'> </td><td id='strNext'> </td><td id='strCost'></td><td><button id='btnStr'>Buy</button></td></tr>
@@ -23,6 +24,13 @@
           <tr><td>Opening Size</td> <td id='openVal'></td><td id='openNext'></td><td id='openCost'></td><td><button id='btnOpen'>Buy</button></td></tr>
         </table>
         <div><b>Progress:</b> <span id='spanProgress'>?</span>/758 </div>
+        <table>
+          <tr><th>Milestone</th><th>Unlock</th><th>Enable</th></tr>
+          <tr id='msAutoRow'><td id='msAutoMs'></td><td>Auto Advance</td><td><input id='msAutoEnable' type='checkbox'></td></tr>
+          <tr id='msOpeningRow'><td id='msOpeningMs'></td><td>Max Opening</td><td><input id='msOpeningEnable' type='checkbox'></td></tr>
+          <tr id='msLaserRow'><td id='msLaserMs'></td><td>Water Cannons</td><td><input id='msLaserEnable' type='checkbox'></td></tr>
+          <tr id='msFurnaceRow'><td id='msFurnaceMs'></td><td>Furnace</td><td><input id='msFurnaceEnable' type='checkbox'></td></tr>
+        </table>
         <div><b>Play time:</b> <span id='spanPlayTime'>?</span></div>
         <div id='buttonRow'>
           <button id='btnHelp'>Help</button>
