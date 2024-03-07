@@ -4,9 +4,9 @@
 
 TODO:
 balance upgrades
-can we make multiple tick sounds?
 when the game is over, unlock "creative mode" which brings back all emoji
   and allows the user to select tool strength & size at will
+ideally, click pitch should be related to block base strength
 */
 
 class App {
@@ -25,7 +25,7 @@ class App {
     this.upgrades = {
       str:   {base: 0.1, factor: 2,  costBase: 10,   costFactor: 3},
       tSize: {base: 4,   factor: 2,  costBase: 100,  costFactor: 5},
-      oSize: {base: 2,   factor: 1,  costBase: 100, costFactor: 3}
+      oSize: {base: 2,   factor: 1,  costBase: 10,   costFactor: 3}
     };
 
     this.milestones = {
@@ -52,9 +52,13 @@ class App {
 
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     this.audioContext = new AudioContext();
-    this.audioElement = new Audio('./click.wav');
-    this.track = this.audioContext.createMediaElementSource(this.audioElement);
-    this.track.connect(this.audioContext.destination);
+    this.audioElements = [];
+    'click,clickLow,clickHigh'.split(',').forEach( audioName => {
+      const audioElement = new Audio(`./${audioName}.wav`);
+      const track = this.audioContext.createMediaElementSource(audioElement);
+      track.connect(this.audioContext.destination);
+      this.audioElements.push(audioElement);
+    });
 
 
     this.blocks = [];
@@ -96,7 +100,7 @@ class App {
 
   updateMilestoneUI() {
     'Auto,Opening,Laser,Furnace'.split(',').forEach( ms => {
-      const enabled = this.progress > this.milestones[ms];
+      const enabled = this.progress >= this.milestones[ms];
       this.UI[`ms${ms}Row`].style.color = enabled ? 'black' : 'hsl(0, 0%, 80%)';
       this.UI[`ms${ms}Enable`].disabled = !enabled;
     });
@@ -765,7 +769,8 @@ class App {
     if (playTick && this.UI.chkAudio.checked) {
       //this causes a pause in chrome dev tools even with a try...catch or
       //catching the promise rejction
-      this.audioElement.play();
+      const audioIndex = Math.floor(Math.random() * this.audioElements.length);
+      this.audioElements[audioIndex].play();
     }
 
     this.blocks = this.blocks.filter( b => {
@@ -798,6 +803,9 @@ class App {
       this.drawEmojiMap(this.mapCtx);
       this.curComplete = true;
       const remaining = this.state.completeEmoji.reduce( (acc, e) => acc + (e === 0 ? 1 : 0), 0);
+      this.progress += 1;
+      this.updateMilestoneUI();
+
       if (remaining === 0 && this.state.gameEnd === undefined) {
         this.showWin();
       } else {
