@@ -1387,7 +1387,7 @@ class App {
       return true;
     }
 
-    const fingerOffset = 75;
+    const fingerOffset = 75 + this.getUpgradeStrength('tSize');
     e.clientX = e.targetTouches[0].clientX - 4;
     e.clientY = e.targetTouches[0].clientY - fingerOffset - 4;
     this.onmousemove(e);
