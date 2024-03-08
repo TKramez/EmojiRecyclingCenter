@@ -21,7 +21,8 @@ h2 {
 }
 
 button {
-  margin-right: 4px;
+  /*margin-right: 4px;*/
+  margin: 5px;
 }
 
 #cmain {
@@ -64,6 +65,7 @@ button {
 #divUpgrades {
   display: inline-block;
   padding: 5px;
+  height: 708px;
 }
 
 #divWinCanCont {
@@ -93,5 +95,5 @@ table {
 
 #checkRow {
   padding-top: 10px;
-  padding-bottom: 5px;
+  padding-bottom: 10px;
 }
