@@ -491,7 +491,12 @@ class App {
           const black = r < 5 && g < 5 && b < 5; 
           
           //const strength = Math.max(1, Math.pow(1.1, this.maxStr * hsl.l) );
-          const strength = Math.max(1, this.maxStr * hsl.l * 0.01);
+          //https://www.desmos.com/calculator/zcpeinvvt4
+          const w = 1;
+          const v = 100.1;
+          const lScale = 1 - v * w / (hsl.l - v) - w;
+          //const strength = Math.max(1, this.maxStr * hsl.l * 0.01);
+          const strength = Math.max(1, this.maxStr * lScale * hsl.l * 0.01);
           
           
           const newBlock = {
@@ -640,9 +645,7 @@ class App {
     //const gs = (Math.pow(this.state.r, colorPow) + 1) / (block.rgb.g + 1);
     //const bs = (Math.pow(this.state.g, colorPow) + 1) / (block.rgb.b + 1);
     //https://www.desmos.com/calculator/04zbvsi39s
-    const w = 0.3; //controls sharpness of increase at high values
-    const v = 735; //contols how early the increase starts
-    const whiteScale = block.rgbSum >= v ? 100 : (1 - v * w / (block.rgbSum - v));
+    const whiteScale = 1; //block.rgbSum >= v ? 100 : (1 - v * w / (block.rgbSum - v));
       
     const br = block.rgb.r * whiteScale;
     const bg = block.rgb.g * whiteScale;
