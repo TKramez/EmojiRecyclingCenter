@@ -201,15 +201,18 @@ class App {
     this.UI.chkAudioBkg.onchange = () => this.state.bgAudio = this.UI.chkAudioBkg.checked;
 
     document.onvisibilitychange = () => {
-      if (!this.state.bgAudio) {
-        app.ambientTracks.forEach( t => {
-          if (document.hidden) {
-            t.pause();
-          } else {
-            t.play();
-          }
-        });
-      }
+      const bgAudio = this.state.bgAudio;
+      const ambient = this.state.ambient;
+      const hidden = document.hidden;
+      const ambientEnabled = ambient && (!hidden || bgAudio);
+
+      app.ambientTracks.forEach( t => {
+        if (ambientEnabled) {
+          t.play();
+        } else {
+          t.pause();
+        }
+      });
     };
 
 
@@ -639,7 +642,6 @@ class App {
     //https://www.desmos.com/calculator/04zbvsi39s
     const w = 0.3; //controls sharpness of increase at high values
     const v = 735; //contols how early the increase starts
-    //these values should make 128 => 140, 250 => 470 255 => 1026
     const whiteScale = block.rgbSum >= v ? 100 : (1 - v * w / (block.rgbSum - v));
       
     const br = block.rgb.r * whiteScale;
