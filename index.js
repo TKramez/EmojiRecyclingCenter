@@ -95,7 +95,7 @@ class App {
     this.loading = true;
     this.draw();
     
-    this.tryAudio = false;
+    this.tryAudio = 0;
     this.UI.btnHelp.click();
   }
 
@@ -131,6 +131,23 @@ class App {
       this.UI[`ms${ms}Row`].style.color = enabled ? 'black' : 'hsl(0, 0%, 80%)';
       this.UI[`ms${ms}Enable`].disabled = !enabled;
     });
+  }
+
+  updateAmbientState() {
+    if (this.tryAudio > 0) {
+      const bgAudio = this.state.bgAudio;
+      const ambient = this.state.ambient;
+      const hidden = document.hidden;
+      const ambientEnabled = ambient && (!hidden || bgAudio);
+
+      app.ambientTracks.forEach( t => {
+        if (ambientEnabled) {
+          t.play();
+        } else {
+          t.pause();
+        }
+      });
+    }
   }
 
   initUI() {
@@ -188,18 +205,14 @@ class App {
     this.UI.chkAmbient.checked = this.state.ambient;
     this.UI.chkAmbient.onchange = () => {
       this.state.ambient = this.UI.chkAmbient.checked;
-      if (this.tryAudio) {
-        if (this.state.ambient) {
-          this.ambientTracks.forEach( t => t.play() );
-        } else {
-          this.ambientTracks.forEach( t => t.pause() );
-        }
-      }
+      this.updateAmbientState(); 
     };
+    this.updateAmbientState();
 
     this.UI.chkAudioBkg.checked = this.state.bgAudio;
     this.UI.chkAudioBkg.onchange = () => this.state.bgAudio = this.UI.chkAudioBkg.checked;
 
+    document.onvisibilitychange = () => this.updateAmbientState(); 
     document.onvisibilitychange = () => {
       const bgAudio = this.state.bgAudio;
       const ambient = this.state.ambient;
@@ -224,7 +237,7 @@ class App {
     this.UI.helpClose.onclick = () => {
       document.querySelector('body').classList.remove('blur2px');
       this.UI.helpContainer.close();
-      this.tryAudio = true;
+      this.tryAudio = 1;
     };
 
     this.UI.btnHelp.onclick = () => {
@@ -366,6 +379,7 @@ class App {
   }
 
   reset() {
+    this.audioContext.suspend();
     this.disableSaves = true;
     localStorage.removeItem('EmojiRecyclingCenter');
     window.location.reload();
@@ -682,12 +696,16 @@ class App {
       if (b.landed) {return -1;}
     });
 
-    if (this.audioContext.state === 'suspended' && this.tryAudio) {
-      this.audioContext.resume();
+    if (this.oneUpdate === undefined) {
+      let a = 1;
+    }
+    this.oneUpdate = true;
 
-      if (this.state.ambient) {
-        this.ambientTracks.forEach( t => t.play() );
-      }
+    //if (this.audioContext.state === 'suspended' && this.tryAudio === 1) {
+    if (this.tryAudio === 1) {
+      this.tryAudio = 2;
+      this.audioContext.resume();
+      this.updateAmbientState();
     }
 
 
