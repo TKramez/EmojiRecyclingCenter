@@ -502,6 +502,7 @@ class App {
             c: `hsl(${hsl.h},${hsl.s}%,${hsl.l}%)`,
             hsl: hsl,
             rgb: {r, g, b},
+            rgbSum,
             rgbf: {r: r / rgbSum, g: g / rgbSum, b: b / rgbSum},
             loose: false,
             strength,
@@ -635,9 +636,18 @@ class App {
     //const rs = (Math.pow(this.state.b, colorPow) + 1) / (block.rgb.r + 1);
     //const gs = (Math.pow(this.state.r, colorPow) + 1) / (block.rgb.g + 1);
     //const bs = (Math.pow(this.state.g, colorPow) + 1) / (block.rgb.b + 1);
-    const rs = block.rgbf.r * (Math.pow(this.state.b, colorPow) + 1) / (block.rgb.r + 1);
-    const gs = block.rgbf.g * (Math.pow(this.state.r, colorPow) + 1) / (block.rgb.g + 1);
-    const bs = block.rgbf.b * (Math.pow(this.state.g, colorPow) + 1) / (block.rgb.b + 1);
+    //https://www.desmos.com/calculator/04zbvsi39s
+    const w = 0.3; //controls sharpness of increase at high values
+    const v = 735; //contols how early the increase starts
+    //these values should make 128 => 140, 250 => 470 255 => 1026
+    const whiteScale = block.rgbSum >= v ? 100 : (1 - v * w / (block.rgbSum - v));
+      
+    const br = block.rgb.r * whiteScale;
+    const bg = block.rgb.g * whiteScale;
+    const bb = block.rgb.b * whiteScale;
+    const rs = block.rgbf.r * (Math.pow(this.state.b, colorPow) + 1) / (br + 1);
+    const gs = block.rgbf.g * (Math.pow(this.state.r, colorPow) + 1) / (bg + 1);
+    const bs = block.rgbf.b * (Math.pow(this.state.g, colorPow) + 1) / (bb + 1);
     const blacks = 0.1;
     const totals = block.black ? blacks : (rs + gs + bs) * 8;
     return totals * this.getUpgradeStrength('str');
