@@ -3,12 +3,9 @@
 /*
 
 TODO:
-balance upgrades
 when the game is over, unlock "creative mode" which brings back all emoji
   and allows the user to select tool strength & size at will
 ideally, click pitch should be related to block base strength
-add option to disable ambient sound when page is hidden
-document.onvisibilitychange = () => { if (document.hidden) { app.ambientTracks.forEach( t => t.pause()); } else { app.ambientTracks.forEach( t => t.play()); } }
 */
 
 /*
@@ -139,7 +136,7 @@ class App {
   initUI() {
     this.UI = {};
 
-    const UIIDs = 'chkAudioBkg,chkAmbient,msAutoRow,msOpeningRow,msLaserRow,msFurnaceRow,msOpeningMs,msOpeningEnable,msFurnaceMs,msFurnaceEnable,msLaserMs,msLaserEnable,msAutoMs,msAutoEnable,emojiLink,blackCount,btnSize,btnStr,btnOpen,openVal,openNext,openCost,sizeVal,sizeNext,sizeCost,strCost,strNext,strVal,cwin,spanWinTime,winBtnClose,winContainer,spanProgress,spanPlayTime,chkAudio,chkShake,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
+    const UIIDs = 'crage,ccannon,chkAudioBkg,chkAmbient,msAutoRow,msOpeningRow,msLaserRow,msFurnaceRow,msOpeningMs,msOpeningEnable,msFurnaceMs,msFurnaceEnable,msLaserMs,msLaserEnable,msAutoMs,msAutoEnable,emojiLink,blackCount,btnSize,btnStr,btnOpen,openVal,openNext,openCost,sizeVal,sizeNext,sizeCost,strCost,strNext,strVal,cwin,spanWinTime,winBtnClose,winContainer,spanProgress,spanPlayTime,chkAudio,chkShake,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
 
     UIIDs.forEach( id => {
       this.UI[id] = document.getElementById(id);
@@ -485,10 +482,14 @@ class App {
           hsl.h = Math.max(0, Math.min(360, hsl.h + 2 * Math.sin(Math.random() * 10)));
           hsl.l = Math.max(0, Math.min(100, hsl.l + 2 * Math.sin(Math.random() * 10)));
           this.colors.push(hsl);
+          let rgbSum = r + g + b;
+          if (rgbSum === 0) {rgbSum = 1;}
+
           const black = r < 5 && g < 5 && b < 5; 
           
           //const strength = Math.max(1, Math.pow(1.1, this.maxStr * hsl.l) );
           const strength = Math.max(1, this.maxStr * hsl.l * 0.01);
+          
           
           const newBlock = {
             wx,
@@ -501,6 +502,7 @@ class App {
             c: `hsl(${hsl.h},${hsl.s}%,${hsl.l}%)`,
             hsl: hsl,
             rgb: {r, g, b},
+            rgbf: {r: r / rgbSum, g: g / rgbSum, b: b / rgbSum},
             loose: false,
             strength,
             baseStr: strength,
@@ -630,11 +632,14 @@ class App {
   calcBlockStrength(block) {
     //gain 1 this.r/g/b for every 255 of r/g/b in block down the hole
     const colorPow = 0.5;
-    const rs = Math.pow(this.state.b + 1, colorPow) / (block.rgb.r + 1);
-    const gs = Math.pow(this.state.r + 1, colorPow) / (block.rgb.g + 1);
-    const bs = Math.pow(this.state.g + 1, colorPow) / (block.rgb.b + 1);
+    //const rs = (Math.pow(this.state.b, colorPow) + 1) / (block.rgb.r + 1);
+    //const gs = (Math.pow(this.state.r, colorPow) + 1) / (block.rgb.g + 1);
+    //const bs = (Math.pow(this.state.g, colorPow) + 1) / (block.rgb.b + 1);
+    const rs = block.rgbf.r * (Math.pow(this.state.b, colorPow) + 1) / (block.rgb.r + 1);
+    const gs = block.rgbf.g * (Math.pow(this.state.r, colorPow) + 1) / (block.rgb.g + 1);
+    const bs = block.rgbf.b * (Math.pow(this.state.g, colorPow) + 1) / (block.rgb.b + 1);
     const blacks = 0.1;
-    const totals = block.black ? blacks : (rs + gs + bs) / 3;
+    const totals = block.black ? blacks : (rs + gs + bs) * 8;
     return totals * this.getUpgradeStrength('str');
   }
 
@@ -1543,6 +1548,14 @@ class App {
   }
   */
 
+  drawMilestoneEmoji() {
+    const cannonCtx = this.UI.ccannon.getContext('2d');
+    cannonCtx.drawImage(this.imgCanvas, 22 * 62, 0, 62, 62, -5, -3, 31, 31);
+
+    const rageCtx = this.UI.crage.getContext('2d');
+    rageCtx.drawImage(this.imgCanvas, 33 * 62, 0, 62, 62, -5, -3, 31, 31);
+  }
+
   async importEmojiData() {
     const importStartTime = (new Date()).getTime();
     const response = await fetch('./pixelData.raw');
@@ -1557,6 +1570,7 @@ class App {
     this.loading = false;
     this.genMapLocations();
     this.buildMapImgCanvas();
+    //this.drawMilestoneEmoji();
 
     if (this.state.completeEmoji[0] == 1) {
       this.init();
