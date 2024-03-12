@@ -6,6 +6,7 @@ TODO:
 when the game is over, unlock "creative mode" which brings back all emoji
   and allows the user to select tool strength & size at will
 ideally, click pitch should be related to block base strength
+at end of game, black pixel count is about 1.9e5
 */
 
 /*
@@ -406,12 +407,22 @@ class App {
   }
 
   getRandomIncompleteEmojiIndex() {
+    //try to avoid selecting index 219 (snail)
     const incompleteEmoji = [];
+    let snailIncomplete = true;
     this.state.completeEmoji.forEach( (complete, i) => {
       if (complete === 0) {
-        incompleteEmoji.push(i);
+        if (i === 219) {
+          snailIncomplete = true;
+        } else {
+          incompleteEmoji.push(i);
+        }
       }
     });
+
+    if (incompleteEmoji.length === 0 && snailIncomplete) {
+      incompleteEmoji.push(219);
+    }
 
     if (incompleteEmoji.length > 0) {
       return incompleteEmoji[Math.floor(Math.random() * incompleteEmoji.length)];
