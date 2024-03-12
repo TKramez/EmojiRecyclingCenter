@@ -36,7 +36,7 @@ class App {
       Auto: 100,
       Opening: 200,
       Laser: 300,
-      Furnace: 400
+      Furnace: 500
     };
 
     this.completeBlocks = [
@@ -676,7 +676,7 @@ class App {
     const height = 430;
     const base = 20;
     //return (this.curTime * 0.1) % height + base;
-    const T = 1000 * 5;
+    const T = 1000 * 2;
     return 2 * Math.abs(this.curTime / T - Math.floor(this.curTime / T + 1/2)) * height + base;
   }
 
@@ -756,17 +756,17 @@ class App {
             }
           }
           if (onEdge) {
+            const effectiveStrength = this.calcBlockStrength(b);
             if (cursorInRange) {
-              const effectiveStrength = this.calcBlockStrength(b);
               b.strength -= effectiveStrength;
             }
 
             if (furnaceActive) {
-              b.strength -= this.getUpgradeStrength('str') / 10.0;
+              b.strength -= effectiveStrength / 20.0;
             }
 
             if (laserHit) {
-              b.strength -= this.getUpgradeStrength('str');
+              b.strength -= effectiveStrength / 2.0;
             }
 
             if (b.strength <= 0) {
