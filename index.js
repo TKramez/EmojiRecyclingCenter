@@ -930,9 +930,13 @@ class App {
     const tileSize = 32;
     for (let x = 0; x < this.bgCanvas.width / tileSize; x++) {
       for (let y = 0; y < this.bgCanvas.height / tileSize; y++) {
-        const ci = (x + y * 777) % this.colors.length;
-        const c = this.colors[ci];
-        ctx.fillStyle = `hsl(${c.h}, ${c.s * 0.3}%, ${c.l}%)`;
+        if (this.colors.length > 0) {
+          const ci = (x + y * 777) % this.colors.length;
+          const c = this.colors[ci];
+          ctx.fillStyle = `hsl(${c.h}, ${c.s * 0.3}%, ${c.l}%)`;
+        } else {
+          ctx.fillStyle = (x + y) % 2 ? 'white' : 'black';
+        }
         ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
       }
     }
@@ -1350,7 +1354,9 @@ class App {
 
       ctx.fillStyle = 'hsla(0, 0%, 0%, 0.2)';
       ctx.font = '20px Arial';
-      ctx.fillText(`#${this.curIndex + 1}`, 45, 35); 
+      if (this.curIndex !== undefined) {
+        ctx.fillText(`#${this.curIndex + 1}`, 45, 35); 
+      }
 
       if (this.state.shake) {
         ctx.translate(this.shakeMag * Math.sin(this.curTime), this.shakeMag * Math.sin(this.curTime + 33)); 
