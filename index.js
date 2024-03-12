@@ -903,8 +903,9 @@ class App {
       this.state.completeEmoji[this.curIndex] = 1; 
       this.drawEmojiMap(this.mapCtx);
       this.curComplete = true;
-      const remaining = this.state.completeEmoji.reduce( (acc, e) => acc + (e === 0 ? 1 : 0), 0);
-      this.progress += 1;
+      //const remaining = this.state.completeEmoji.reduce( (acc, e) => acc + (e === 0 ? 1 : 0), 0);
+      this.progress = this.state.completeEmoji.reduce( (acc, e) => acc + e );
+      const remaining = this.emojiCount - this.progress;
       this.updateMilestoneUI();
 
       if (remaining === 0 && this.state.gameEnd === undefined) {
@@ -914,9 +915,9 @@ class App {
           this.init();
         }
       }
+    } else {
+      this.progress = this.state.completeEmoji.reduce( (acc, e) => acc + e );
     }
-
-    this.progress = this.state.completeEmoji.reduce( (acc, e) => acc + e );
     
   }
 
