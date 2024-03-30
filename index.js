@@ -48,6 +48,8 @@ class App {
       '1110011001010101000011101110010011101'
     ];
 
+    this.highlightDelay = 10 * 1000;
+
     this.loadFromStorage();
 
     this.initUI();
@@ -792,7 +794,7 @@ class App {
         }
       }
 
-      if ((curTime - this.lastDropTime) > (1000 * 20)) {
+      if ((curTime - this.lastDropTime) > this.highlightDelay) {
         this.highlightTime = true;
       }
     
