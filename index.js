@@ -231,6 +231,25 @@ class App {
       });
     };
 
+    this.UI.helpContainer.onclose = () => {
+      document.querySelector('body').classList.remove('blur2px');
+    }
+
+    this.UI.resetContainer.onclose = () => {
+      document.querySelector('body').classList.remove('blur2px');
+    }
+
+    this.UI.importContainer.onclose = () => {
+      document.querySelector('body').classList.remove('blur2px');
+    }
+
+    this.UI.exportContainer.onclose = () => {
+      document.querySelector('body').classList.remove('blur2px');
+    }
+
+    this.UI.winContainer.onclose = () => {
+      document.querySelector('body').classList.remove('blur2px');
+    }
 
     this.UI.winBtnClose.onclick = () => {
       document.querySelector('body').classList.remove('blur2px');
@@ -247,6 +266,7 @@ class App {
       document.querySelector('body').classList.add('blur2px');
       this.UI.helpContainer.showModal();
     };
+
 
 
     this.UI.resetNo.onclick = () => {
