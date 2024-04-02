@@ -156,7 +156,7 @@ class App {
   initUI() {
     this.UI = {};
 
-    const UIIDs = 'crage,ccannon,chkAudioBkg,chkAmbient,msAutoRow,msOpeningRow,msLaserRow,msFurnaceRow,msOpeningMs,msOpeningEnable,msFurnaceMs,msFurnaceEnable,msLaserMs,msLaserEnable,msAutoMs,msAutoEnable,emojiLink,blackCount,btnSize,btnStr,btnOpen,openVal,openNext,openCost,sizeVal,sizeNext,sizeCost,strCost,strNext,strVal,cwin,spanWinTime,winBtnClose,winContainer,spanProgress,spanPlayTime,chkAudio,chkShake,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
+    const UIIDs = 'chkBGColor,chkCursor,crage,ccannon,chkAudioBkg,chkAmbient,msAutoRow,msOpeningRow,msLaserRow,msFurnaceRow,msOpeningMs,msOpeningEnable,msFurnaceMs,msFurnaceEnable,msLaserMs,msLaserEnable,msAutoMs,msAutoEnable,emojiLink,blackCount,btnSize,btnStr,btnOpen,openVal,openNext,openCost,sizeVal,sizeNext,sizeCost,strCost,strNext,strVal,cwin,spanWinTime,winBtnClose,winContainer,spanProgress,spanPlayTime,chkAudio,chkShake,helpContainer,resetContainer,exportContainer,importContainer,helpClose,importText,btnHelp,btnImport,btnExport,btnSave,btnReset,resetYes,resetNo,exportText,exportBtnClose,importBtnImport,importBtnClose'.split(',');
 
     UIIDs.forEach( id => {
       this.UI[id] = document.getElementById(id);
@@ -214,6 +214,12 @@ class App {
 
     this.UI.chkAudioBkg.checked = this.state.bgAudio;
     this.UI.chkAudioBkg.onchange = () => this.state.bgAudio = this.UI.chkAudioBkg.checked;
+
+    this.UI.chkCursor.checked = this.state.invertCursor;
+    this.UI.chkCursor.onchange = () => this.state.invertCursor = this.UI.chkCursor.checked;
+
+    this.UI.chkBGColor.checked = this.state.bgColor;
+    this.UI.chkBGColor.onchange = () => this.state.bgColor = this.UI.chkBGColor.checked;
 
     document.onvisibilitychange = () => this.updateAmbientState(); 
     document.onvisibilitychange = () => {
@@ -381,7 +387,9 @@ class App {
       autoAdvance: false,
       lasersOn: false,
       furnaceOn: false,
-      maxOpen: false
+      maxOpen: false,
+      invertCursor: false,
+      bgColor: false
     };
 
     if (rawState !== null) {
@@ -1332,8 +1340,16 @@ class App {
     const topBorder = 20;
     const height = this.bgCanvas.height - (topBorder + 250);
     const width = this.bgCanvas.width - sideBorder * 2;
-    const furnaceL = 4 * Math.sin(this.curTime / 1000) + 1 * Math.sin(this.curTime / 77 + 7 * Math.sin(this.curTime / 888)) + 70;
-    ctx.fillStyle = this.state.furnaceOn ? `hsl(0, 75%, ${furnaceL}%)` : 'white';
+    if (this.state.furnaceOn) {
+      const furnaceL = 4 * Math.sin(this.curTime / 1000) + 1 * Math.sin(this.curTime / 77 + 7 * Math.sin(this.curTime / 888)) + 70;
+      ctx.fillStyle = `hsl(0, 75%, ${furnaceL}%)`;
+    } else if (this.state.bgColor) {
+      const backL = 4 * Math.sin(this.curTime / 1000) + 1 * Math.sin(this.curTime / 77 + 7 * Math.sin(this.curTime / 888)) + 85;
+      ctx.fillStyle = `hsl(0, 0%, ${backL}%)`;
+    } else {
+      ctx.fillStyle = 'white';
+    }
+    //ctx.fillStyle = this.state.furnaceOn ? `hsl(0, 75%, ${furnaceL}%)` : 'white';
     ctx.fillRect(sideBorder, topBorder, width, height);
 
     
@@ -1441,12 +1457,22 @@ class App {
     }
 
     //cursor
-    ctx.fillStyle = 'rgba(38,38,38,0.2)';
-    ctx.beginPath();
     const cursorSize = this.getUpgradeStrength('tSize');
+    if (this.state.invertCursor) {
+      ctx.globalCompositeOperation = 'difference';
+      ctx.fillStyle = 'white';
+      ctx.beginPath();
 
-    ctx.arc(this.mousex, this.mousey, cursorSize, 0, Math.PI * 2);
-    ctx.fill();
+      ctx.arc(this.mousex, this.mousey, cursorSize, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+    } else {
+      ctx.fillStyle = 'rgba(38,38,38,0.2)';
+      ctx.beginPath();
+
+      ctx.arc(this.mousex, this.mousey, cursorSize, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     //const progress = this.state.completeEmoji.reduce( (acc, e) => acc + e );
     this.UI.spanProgress.innerText = this.progress;

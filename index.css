@@ -93,7 +93,11 @@ table {
   padding-top: 5px;
 }
 
-#checkRow {
+#checkRow1 {
   padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+#checkRow2 {
   padding-bottom: 10px;
 }
