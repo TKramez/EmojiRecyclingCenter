@@ -414,8 +414,25 @@ class App {
     this.disableSaves = true;
     localStorage.removeItem('EmojiRecyclingCenter');
     window.location.reload();
-  }  
+  }
 
+  softReset() {
+    this.audioContext.suspend();
+    this.disableSaves = true;
+    let saveMe = { str: app.state.str,
+                   tSize: app.state.tSize,
+                   oSize: app.state.oSize,
+                   ambient: app.state.ambient,
+                   bgAudio: app.state.bgAudio,
+                   bgColor: app.state.bgColor,
+                   invertCursor: app.state.invertCursor,
+                   sfx: app.state.sfx,
+                   shake: app.state.shake
+                 };
+    let saveString = JSON.stringify(saveMe);
+    localStorage.setItem('EmojiRecyclingCenter', saveString);
+    window.location.reload();
+  }
 
   //modified from https://gist.github.com/vahidk/05184faf3d92a0aa1b46aeaa93b07786
   //s and l from 0 to 100
