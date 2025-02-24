@@ -194,6 +194,10 @@ class App {
       this.initFunnelBlocks();
     };
 
+this.UI.btnSoftReset.onclick = () => {
+      app.softReset();
+    };
+    
     this.UI.resetYes.onclick = () => {
       app.reset();
     };
@@ -284,7 +288,9 @@ class App {
       document.querySelector('body').classList.add('blur2px');
       this.UI.resetContainer.showModal();
     };
-   
+
+    
+    
     this.UI.exportBtnClose.onclick = () => {
       document.querySelector('body').classList.remove('blur2px');
       this.UI.exportContainer.close();
