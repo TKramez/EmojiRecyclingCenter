@@ -423,21 +423,8 @@ this.UI.btnSoftReset.onclick = () => {
   }
 
   softReset() {
-    this.audioContext.suspend();
-    this.disableSaves = true;
-    let saveMe = { str: app.state.str,
-                   tSize: app.state.tSize,
-                   oSize: app.state.oSize,
-                   ambient: app.state.ambient,
-                   bgAudio: app.state.bgAudio,
-                   bgColor: app.state.bgColor,
-                   invertCursor: app.state.invertCursor,
-                   sfx: app.state.sfx,
-                   shake: app.state.shake,
-                   gameStart: app.state.gameStart
-                 };
-    let saveString = JSON.stringify(saveMe);
-    localStorage.setItem('EmojiRecyclingCenter', saveString);
+    delete this.state.completeEmoji
+    this.saveToStorage();
     window.location.reload();
   }
 
