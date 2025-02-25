@@ -433,7 +433,8 @@ this.UI.btnSoftReset.onclick = () => {
                    bgColor: app.state.bgColor,
                    invertCursor: app.state.invertCursor,
                    sfx: app.state.sfx,
-                   shake: app.state.shake
+                   shake: app.state.shake,
+                   gameStart: app.state.gameStart
                  };
     let saveString = JSON.stringify(saveMe);
     localStorage.setItem('EmojiRecyclingCenter', saveString);
