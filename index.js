@@ -423,7 +423,11 @@ this.UI.btnSoftReset.onclick = () => {
   }
 
   softReset() {
-    delete this.state.completeEmoji
+    delete this.state.completeEmoji;
+    this.state.furnaceOn = false;
+    this.state.lasersOn = false;
+    this.state.autoAdvance = false;
+    this.state.maxOpen = false;
     this.saveToStorage();
     window.location.reload();
   }
