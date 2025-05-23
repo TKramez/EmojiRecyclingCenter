@@ -426,7 +426,6 @@ this.UI.btnSoftReset.onclick = () => {
     delete this.state.completeEmoji;
     this.state.furnaceOn = false;
     this.state.lasersOn = false;
-    this.state.maxOpen = false;
     this.saveToStorage();
     window.location.reload();
   }
